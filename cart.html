@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart & Checkout — Mirastore</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://kit.fontawesome.com/92e9ab7a63.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<section id="header">
+  <a href="index.html"><img src="img/logo.png" alt="Mirastore" class="logo"></a>
+  <div>
+    <ul id="navbar">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="shop.html">Shop</a></li>
+      <li><a href="cart.html" class="nav-cart-btn active"><i class="fa-solid fa-bag-shopping"></i><span class="cart-count" style="display:none;">0</span></a></li>
+      <span id="user-nav-slot"></span>
+      <li id="lg-nag"><a href="#" id="close"><i class="far fa-times"></i></a></li>
+    </ul>
+  </div>
+  <div id="mobile">
+    <a href="cart.html" class="nav-cart-btn" style="position:relative;"><i class="fa-solid fa-bag-shopping"></i><span class="cart-count" style="display:none;">0</span></a>
+    <i id="bar" class="fas fa-bars"></i>
+  </div>
+</section>
+
+<div class="cart-page">
+  <h2><i class="fas fa-shopping-bag" style="color:var(--primary);margin-right:10px;"></i>Your Cart</h2>
+
+  <!-- EMPTY CART -->
+  <div id="empty-cart" style="display:none;text-align:center;padding:80px 20px;">
+    <i class="fas fa-bag-shopping" style="font-size:60px;color:var(--border);margin-bottom:20px;"></i>
+    <h3 style="font-size:22px;margin-bottom:10px;">Your cart is empty</h3>
+    <p>Browse our store and add some items to get started.</p>
+    <a href="shop.html" class="btn-primary" style="display:inline-block;margin-top:20px;">Go Shopping</a>
+  </div>
+
+  <!-- CART CONTENT -->
+  <div id="cart-content">
+    <div style="overflow-x:auto;">
+      <table class="cart-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Vendor</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Subtotal</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="cart-body"></tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:20px;">
+      <div class="cart-summary" style="width:100%;max-width:380px;">
+        <h4 style="margin-bottom:18px;">Order Summary</h4>
+        <div class="cart-summary-row"><span>Subtotal</span><span id="summary-subtotal">₦0</span></div>
+        <div class="cart-summary-row"><span>Delivery fee</span><span style="color:var(--teal);">To be arranged</span></div>
+        <div class="cart-summary-row cart-summary-total"><span>Total</span><span id="summary-total">₦0</span></div>
+        <button class="btn-primary" style="width:100%;margin-top:18px;padding:14px;font-size:15px;" onclick="startCheckout()">
+          Proceed to Checkout <i class="fas fa-arrow-right" style="margin-left:6px;"></i>
+        </button>
+        <a href="shop.html" style="display:block;text-align:center;margin-top:12px;font-size:13px;color:var(--mid);">
+          <i class="fas fa-arrow-left" style="margin-right:4px;"></i> Continue Shopping
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== CHECKOUT MODAL ====== -->
+<div class="modal-overlay" id="checkout-modal">
+  <div class="modal">
+    <span class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></span>
+
+    <!-- Step Indicators -->
+    <div class="step-indicator">
+      <div class="step active" id="step-ind-1">1. Delivery</div>
+      <div style="flex:0;color:var(--border);">›</div>
+      <div class="step" id="step-ind-2">2. Payment</div>
+      <div style="flex:0;color:var(--border);">›</div>
+      <div class="step" id="step-ind-3">3. Receipt</div>
+      <div style="flex:0;color:var(--border);">›</div>
+      <div class="step" id="step-ind-4">4. Done</div>
+    </div>
+
+    <!-- STEP 1: Delivery Details -->
+    <div id="step-1">
+      <h2>Delivery Details</h2>
+      <p style="font-size:13px;margin-bottom:24px;">Where should we deliver your order?</p>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="co-name" placeholder="Your full name">
+      </div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" id="co-phone" placeholder="08012345678">
+      </div>
+      <div class="form-group">
+        <label>Delivery Address / Location on Campus</label>
+        <textarea id="co-address" rows="3" placeholder="e.g. Faculty of Engineering, Room 201, Block A Hostel..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Any delivery note?</label>
+        <input type="text" id="co-note" placeholder="e.g. Call when you arrive (optional)">
+      </div>
+      <button class="btn-teal" style="width:100%;padding:13px;" onclick="goToStep(2)">Continue to Payment →</button>
+    </div>
+
+    <!-- STEP 2: Payment -->
+    <div id="step-2" style="display:none;">
+      <h2>Make Payment</h2>
+      <p style="font-size:13px;margin-bottom:8px;">Transfer your total to the account below. Your order will be processed once payment is confirmed.</p>
+
+      <div style="background:var(--primary-light);border-radius:10px;padding:16px;margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:13px;font-weight:600;">Amount to Pay:</span>
+          <span style="font-size:22px;font-weight:700;color:var(--primary);font-family:var(--font-display);" id="checkout-total-display">₦0</span>
+        </div>
+        <div style="font-size:12px;color:var(--mid);">Use your name as payment reference</div>
+      </div>
+
+      <div class="bank-card selected">
+        <h5><i class="fas fa-university" style="color:var(--teal);margin-right:6px;"></i>Mirastore Central Account</h5>
+        <p>Pay to this account, then confirm vendors' orders</p>
+        <div class="acct-number">0045 6789 00</div>
+        <div style="display:flex;gap:20px;margin-top:8px;font-size:13px;">
+          <span><strong>Bank:</strong> GTBank</span>
+          <span><strong>Name:</strong> Mirastore University Store</span>
+        </div>
+        <button onclick="copyAccountNumber()" style="margin-top:10px;background:var(--teal);color:#fff;border:none;padding:6px 14px;border-radius:5px;font-size:12px;cursor:pointer;">
+          <i class="fas fa-copy"></i> Copy Account Number
+        </button>
+      </div>
+
+      <div style="background:#fffbf0;border:1px solid #f0e0a0;border-radius:8px;padding:14px;margin-bottom:20px;font-size:13px;">
+        <strong><i class="fas fa-info-circle" style="color:var(--accent);"></i> How it works:</strong><br>
+        1. Transfer the exact amount above to the account<br>
+        2. Take a screenshot/photo of your bank receipt<br>
+        3. Upload the receipt in the next step<br>
+        4. Our team processes your order within 1–2 hours
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <button class="btn-outline" style="flex:1;padding:12px;" onclick="goToStep(1)">← Back</button>
+        <button class="btn-teal" style="flex:2;padding:12px;" onclick="goToStep(3)">I've Paid — Upload Receipt →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Upload Receipt -->
+    <div id="step-3" style="display:none;">
+      <h2>Upload Payment Receipt</h2>
+      <p style="font-size:13px;margin-bottom:20px;">Upload a screenshot or photo of your bank transfer receipt as proof of payment.</p>
+
+      <div class="receipt-upload-area" id="upload-area" onclick="document.getElementById('receipt-file').click()">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <p><strong>Click to upload</strong> or drag & drop</p>
+        <p style="font-size:12px;color:#aaa;margin-top:4px;">PNG, JPG, JPEG — max 5MB</p>
+      </div>
+      <input type="file" id="receipt-file" accept="image/*" style="display:none;" onchange="previewReceipt(event)">
+      <img id="receipt-preview" class="upload-preview">
+
+      <div style="margin-top:16px;">
+        <div class="form-group">
+          <label>Transaction Reference / Description (optional)</label>
+          <input type="text" id="co-txref" placeholder="e.g. Transfer from GTB: 123456">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:10px;">
+        <button class="btn-outline" style="flex:1;padding:12px;" onclick="goToStep(2)">← Back</button>
+        <button class="btn-primary" style="flex:2;padding:12px;" onclick="submitOrder()">Submit Order <i class="fas fa-check" style="margin-left:6px;"></i></button>
+      </div>
+    </div>
+
+    <!-- STEP 4: Success -->
+    <div id="step-4" style="display:none;">
+      <div class="order-success">
+        <i class="fas fa-check-circle"></i>
+        <h3>Order Placed Successfully!</h3>
+        <p>Your order has been received. We'll verify your payment and contact you shortly.</p>
+        <div style="background:var(--light-bg);border-radius:10px;padding:16px;margin:20px 0;text-align:left;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;">
+            <span>Order ID:</span><strong id="success-order-id">—</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;">
+            <span>Total Paid:</span><strong id="success-total">—</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;">
+            <span>Estimated Delivery:</span><strong>Within 24 hours</strong>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--mid);">When you receive your items, please mark your order as delivered in your dashboard.</p>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <a href="buyer_dashboard.html" class="btn-teal" style="flex:1;text-align:center;padding:12px;">Track My Orders</a>
+          <a href="shop.html" class="btn-outline" style="flex:1;text-align:center;padding:12px;">Continue Shopping</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-bottom" style="border-top:none;padding-top:0;">
+    <p>© 2025 Mirastore</p>
+    <a href="index.html" style="color:rgba(255,255,255,0.5);font-size:13px;">Back to Home</a>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+let receiptDataUrl = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderCart();
+});
+
+function renderCart() {
+  const cart = MS.getCart();
+  const emptyDiv = document.getElementById('empty-cart');
+  const contentDiv = document.getElementById('cart-content');
+
+  if (cart.length === 0) {
+    emptyDiv.style.display = 'block';
+    contentDiv.style.display = 'none';
+    return;
+  }
+  emptyDiv.style.display = 'none';
+  contentDiv.style.display = 'block';
+
+  const tbody = document.getElementById('cart-body');
+  tbody.innerHTML = '';
+
+  cart.forEach(item => {
+    const product = MS.getProductById(item.productId);
+    if (!product) return;
+    const vendor = MS.getVendorById(product.vendorId);
+    const subtotal = product.price * item.qty;
+
+    tbody.innerHTML += `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <img src="${product.image}" class="cart-product-img" alt="${product.name}">
+            <div>
+              <div class="cart-product-name">${product.name}</div>
+              <div class="cart-vendor-tag">${product.category}</div>
+            </div>
+          </div>
+        </td>
+        <td><span style="font-size:13px;">${vendor ? vendor.name : '—'}</span></td>
+        <td><strong>${MS.formatPrice(product.price)}</strong></td>
+        <td>
+          <div class="qty-control">
+            <button class="qty-btn" onclick="changeQty('${item.productId}', ${item.qty - 1})">−</button>
+            <span class="qty-input">${item.qty}</span>
+            <button class="qty-btn" onclick="changeQty('${item.productId}', ${item.qty + 1})">+</button>
+          </div>
+        </td>
+        <td><strong style="color:var(--primary);">${MS.formatPrice(subtotal)}</strong></td>
+        <td><span class="remove-btn" onclick="removeItem('${item.productId}')"><i class="fas fa-trash-alt"></i></span></td>
+      </tr>
+    `;
+  });
+
+  const total = MS.getCartTotal();
+  document.getElementById('summary-subtotal').textContent = MS.formatPrice(total);
+  document.getElementById('summary-total').textContent = MS.formatPrice(total);
+}
+
+function changeQty(productId, newQty) {
+  MS.updateQty(productId, newQty);
+  renderCart();
+}
+function removeItem(productId) {
+  MS.removeFromCart(productId);
+  renderCart();
+}
+
+function startCheckout() {
+  const cart = MS.getCart();
+  if (cart.length === 0) { MS.showToast('Your cart is empty', 'error'); return; }
+
+  // Pre-fill user info
+  const user = MS.getCurrentUser();
+  if (user) { document.getElementById('co-name').value = user.name || ''; }
+
+  document.getElementById('checkout-total-display').textContent = MS.formatPrice(MS.getCartTotal());
+  document.getElementById('checkout-modal').classList.add('open');
+  goToStep(1);
+}
+
+function closeModal() {
+  document.getElementById('checkout-modal').classList.remove('open');
+}
+
+function goToStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`step-${i}`).style.display = i === n ? 'block' : 'none';
+    const ind = document.getElementById(`step-ind-${i}`);
+    ind.className = 'step' + (i === n ? ' active' : i < n ? ' done' : '');
+  }
+}
+
+function copyAccountNumber() {
+  navigator.clipboard.writeText('0045678900').then(() => MS.showToast('Account number copied!', 'success'));
+}
+
+function previewReceipt(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    receiptDataUrl = e.target.result;
+    const preview = document.getElementById('receipt-preview');
+    preview.src = receiptDataUrl;
+    preview.style.display = 'block';
+
+    const area = document.getElementById('upload-area');
+    area.style.borderColor = 'var(--teal)';
+    area.style.background = '#f0fbf9';
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitOrder() {
+  const name = document.getElementById('co-name').value.trim();
+  const phone = document.getElementById('co-phone').value.trim();
+  const address = document.getElementById('co-address').value.trim();
+
+  if (!name || !phone || !address) { MS.showToast('Please fill in your delivery details (Step 1)', 'error'); goToStep(1); return; }
+  if (!receiptDataUrl) { MS.showToast('Please upload your payment receipt', 'error'); return; }
+
+  const cart = MS.getCart();
+  const total = MS.getCartTotal();
+  const txref = document.getElementById('co-txref').value.trim();
+
+  const order = MS.createOrder({
+    buyer: name,
+    phone,
+    address,
+    note: document.getElementById('co-note').value.trim(),
+    items: cart.map(i => ({ productId: i.productId, qty: i.qty, price: MS.getProductById(i.productId)?.price || 0 })),
+    total,
+    paymentStatus: 'receipt_uploaded',
+    receiptUrl: receiptDataUrl,
+    txref,
+    userId: MS.getCurrentUser()?.id || 'guest',
+  });
+
+  document.getElementById('success-order-id').textContent = order.id;
+  document.getElementById('success-total').textContent = MS.formatPrice(total);
+
+  receiptDataUrl = null;
+  document.getElementById('receipt-preview').style.display = 'none';
+  document.getElementById('receipt-file').value = '';
+
+  goToStep(4);
+  renderCart();
+}
+
+// Close modal on overlay click
+document.getElementById('checkout-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop — Mirastore</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://kit.fontawesome.com/92e9ab7a63.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<section id="header">
+  <a href="index.html"><img src="img/logo.png" alt="Mirastore" class="logo"></a>
+  <div>
+    <ul id="navbar">
+      <li><a href="index.html">Home</a></li>
+      <li><a class="active" href="shop.html">Shop</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="cart.html" class="nav-cart-btn"><i class="fa-solid fa-bag-shopping"></i><span class="cart-count" style="display:none;">0</span></a></li>
+      <span id="user-nav-slot"></span>
+      <li id="lg-nag"><a href="#" id="close"><i class="far fa-times"></i></a></li>
+    </ul>
+  </div>
+  <div id="mobile">
+    <a href="cart.html" class="nav-cart-btn" style="position:relative;"><i class="fa-solid fa-bag-shopping"></i><span class="cart-count" style="display:none;">0</span></a>
+    <i id="bar" class="fas fa-bars"></i>
+  </div>
+</section>
+
+<div class="page-banner">
+  <div>
+    <h1>Browse the Store</h1>
+    <p>Discover products from verified university vendors</p>
+  </div>
+  <div class="breadcrumb">
+    <a href="index.html">Home</a>
+    <span>/</span>
+    <span class="current">Shop</span>
+  </div>
+</div>
+
+<div class="shop-layout">
+  <!-- FILTERS -->
+  <aside class="shop-filters">
+    <div class="filter-card">
+      <h4><i class="fas fa-filter" style="color:var(--primary);margin-right:6px;"></i> Filter By</h4>
+      <div id="category-filters"></div>
+    </div>
+
+    <div class="filter-card">
+      <h4>By Vendor</h4>
+      <div id="vendor-filters"></div>
+    </div>
+
+    <div class="filter-card">
+      <h4>Price Range</h4>
+      <div class="price-range">
+        <input type="range" id="price-max" min="500" max="50000" value="50000" oninput="updatePriceLabel()">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:6px;color:var(--mid);">
+          <span>₦0</span>
+          <span id="price-label">₦50,000</span>
+        </div>
+      </div>
+      <button class="btn-teal" style="width:100%;margin-top:12px;padding:9px;" onclick="applyFilters()">Apply</button>
+    </div>
+
+    <div class="filter-card">
+      <h4>Sort By</h4>
+      <div class="filter-option"><label><input type="radio" name="sort" value="default" checked> Default</label></div>
+      <div class="filter-option"><label><input type="radio" name="sort" value="price-low"> Price: Low to High</label></div>
+      <div class="filter-option"><label><input type="radio" name="sort" value="price-high"> Price: High to Low</label></div>
+      <div class="filter-option"><label><input type="radio" name="sort" value="rating"> Top Rated</label></div>
+    </div>
+  </aside>
+
+  <!-- PRODUCTS -->
+  <main class="shop-products">
+    <div class="shop-toolbar">
+      <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" id="search-input" placeholder="Search products..." oninput="applyFilters()">
+      </div>
+      <span id="results-count" style="font-size:13px;color:var(--mid);white-space:nowrap;margin-left:16px;"></span>
+    </div>
+    <div class="pro-container" id="products-grid"></div>
+    <div id="no-results" style="display:none;text-align:center;padding:60px 20px;">
+      <i class="fas fa-search" style="font-size:48px;color:var(--border);margin-bottom:16px;"></i>
+      <h3 style="color:var(--mid);font-size:20px;">No products found</h3>
+      <p>Try adjusting your search or filters.</p>
+    </div>
+  </main>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-bottom" style="border-top:none;padding-top:0;">
+    <p>© 2025 Mirastore</p>
+    <a href="index.html" style="color:rgba(255,255,255,0.5);font-size:13px;">Back to Home</a>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+let allProducts = [];
+let allVendors = [];
+let selectedCategories = new Set();
+let selectedVendors = new Set();
+
+document.addEventListener('DOMContentLoaded', function() {
+  allProducts = MS.getProducts();
+  allVendors = MS.getVendors();
+
+  buildCategoryFilters();
+  buildVendorFilters();
+
+  // Check URL params
+  const params = new URLSearchParams(window.location.search);
+  const vendorFilter = params.get('vendor');
+  const categoryFilter = params.get('category');
+  if (vendorFilter) { selectedVendors.add(vendorFilter); document.querySelectorAll('.vendor-cb').forEach(cb => { if (cb.value === vendorFilter) cb.checked = true; }); }
+  if (categoryFilter) { selectedCategories.add(categoryFilter); document.querySelectorAll('.cat-cb').forEach(cb => { if (cb.value === categoryFilter) cb.checked = true; }); }
+
+  applyFilters();
+  document.querySelectorAll('input[name="sort"]').forEach(r => r.addEventListener('change', applyFilters));
+});
+
+function buildCategoryFilters() {
+  const cats = [...new Set(allProducts.map(p => p.category))];
+  const container = document.getElementById('category-filters');
+  cats.forEach(cat => {
+    container.innerHTML += `<div class="filter-option"><label><input type="checkbox" class="cat-cb" value="${cat}" onchange="toggleCat('${cat}')"> ${cat}</label></div>`;
+  });
+}
+function buildVendorFilters() {
+  const container = document.getElementById('vendor-filters');
+  allVendors.forEach(v => {
+    container.innerHTML += `<div class="filter-option"><label><input type="checkbox" class="vendor-cb" value="${v.id}" onchange="toggleVendor('${v.id}')"> ${v.name}</label></div>`;
+  });
+}
+function toggleCat(cat) { if (selectedCategories.has(cat)) selectedCategories.delete(cat); else selectedCategories.add(cat); applyFilters(); }
+function toggleVendor(id) { if (selectedVendors.has(id)) selectedVendors.delete(id); else selectedVendors.add(id); applyFilters(); }
+function updatePriceLabel() {
+  const val = parseInt(document.getElementById('price-max').value);
+  document.getElementById('price-label').textContent = '₦' + val.toLocaleString('en-NG');
+}
+
+function applyFilters() {
+  const query = document.getElementById('search-input').value.toLowerCase();
+  const maxPrice = parseInt(document.getElementById('price-max').value);
+  const sort = document.querySelector('input[name="sort"]:checked').value;
+
+  let filtered = allProducts.filter(p => {
+    const matchSearch = p.name.toLowerCase().includes(query) || p.description.toLowerCase().includes(query) || p.category.toLowerCase().includes(query);
+    const matchCat = selectedCategories.size === 0 || selectedCategories.has(p.category);
+    const matchVendor = selectedVendors.size === 0 || selectedVendors.has(p.vendorId);
+    const matchPrice = p.price <= maxPrice;
+    return matchSearch && matchCat && matchVendor && matchPrice;
+  });
+
+  if (sort === 'price-low') filtered.sort((a,b) => a.price - b.price);
+  else if (sort === 'price-high') filtered.sort((a,b) => b.price - a.price);
+  else if (sort === 'rating') filtered.sort((a,b) => b.rating - a.rating);
+
+  renderProducts(filtered);
+}
+
+function renderProducts(products) {
+  const grid = document.getElementById('products-grid');
+  const noResults = document.getElementById('no-results');
+  const countEl = document.getElementById('results-count');
+
+  if (products.length === 0) {
+    grid.innerHTML = '';
+    noResults.style.display = 'block';
+    countEl.textContent = '0 products';
+    return;
+  }
+  noResults.style.display = 'none';
+  countEl.textContent = `${products.length} product${products.length > 1 ? 's' : ''} found`;
+
+  grid.innerHTML = products.map(p => {
+    const vendor = allVendors.find(v => v.id === p.vendorId);
+    return `
+      <div class="pro" onclick="location.href='product.html?id=${p.id}'">
+        <span class="vendor-tag">${vendor ? vendor.name : ''}</span>
+        <img src="${p.image}" alt="${p.name}" loading="lazy">
+        <div class="des">
+          <span>${p.category}</span>
+          <h5>${p.name}</h5>
+          <div class="star">${MS.renderStars(p.rating)}</div>
+          <h4>${MS.formatPrice(p.price)}</h4>
+        </div>
+        <a href="#" class="add-cart" onclick="event.stopPropagation();MS.addToCart('${p.id}');return false;" title="Add to cart">
+          <i class="fas fa-cart-plus"></i>
+        </a>
+      </div>
+    `;
+  }).join('');
+}
+</script>
+</body>
+</html>

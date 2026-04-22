@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendor Dashboard — Mirastore</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://kit.fontawesome.com/92e9ab7a63.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .dash-sidebar { background:#0f172a; }
+    .dash-sidebar .store-avatar { background:linear-gradient(135deg,var(--teal),var(--teal-dark)); }
+    .dash-nav a:hover,.dash-nav a.active { border-left-color:var(--teal); }
+    .plan-banner { border-radius:10px; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; font-size:13px; flex-wrap:wrap; gap:8px; }
+    .plan-banner.ok    { background:#f0fdf4; border:1px solid #bbf7d0; color:#15803d; }
+    .plan-banner.warn  { background:#fff7ed; border:1px solid #fed7aa; color:#c2410c; }
+    .plan-banner.crit  { background:#fef2f2; border:1px solid #fecaca; color:#dc2626; }
+    .stock-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .stock-table th { background:#f8fafc; color:#64748b; padding:10px 14px; text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); }
+    .stock-table td { padding:12px 14px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+    .stock-table tr:last-child td { border-bottom:none; }
+    .stock-bar { height:6px; border-radius:3px; background:#e2e8f0; overflow:hidden; width:80px; display:inline-block; vertical-align:middle; }
+    .stock-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#27ae60,#2ecc71); }
+    .stock-fill.low { background:linear-gradient(90deg,#e74c3c,#c0392b); }
+    .stock-fill.mid { background:linear-gradient(90deg,#f39c12,#e67e22); }
+    .ledger-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .ledger-table th { background:#1e293b; color:rgba(255,255,255,.7); padding:10px 14px; text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.5px; }
+    .ledger-table td { padding:12px 14px; border-bottom:1px solid #f1f5f9; }
+    .ledger-table tr:last-child td { border-bottom:none; }
+    .ledger-in  { color:#059669; font-weight:700; }
+    .ledger-out { color:#dc2626; font-weight:700; }
+    .img-method-tabs { display:flex; gap:8px; margin-bottom:12px; }
+    .img-tab { padding:7px 14px; border-radius:6px; border:1.5px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; color:var(--mid); transition:all .2s; }
+    .img-tab.active { background:var(--teal); color:#fff; border-color:var(--teal); }
+    .img-preview-box { width:100%; max-height:160px; object-fit:cover; border-radius:8px; margin-top:10px; display:none; border:1px solid var(--border); }
+    .complaint-card { background:#fff; border-radius:12px; padding:20px; box-shadow:var(--shadow); margin-bottom:14px; border-left:4px solid var(--primary); }
+    .complaint-card.resolved { border-left-color:var(--teal); opacity:.8; }
+    .complaint-meta { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+    .reply-bubble { background:#f8fafc; border-radius:8px; padding:10px 14px; margin-top:8px; font-size:13px; }
+    .reply-bubble.admin-reply { background:#e0f5f3; }
+    .rb-from { font-size:11px; font-weight:700; color:var(--mid); margin-bottom:3px; text-transform:uppercase; letter-spacing:.5px; }
+    .msg-list { display:flex; flex-direction:column; gap:10px; max-height:380px; overflow-y:auto; padding:16px; background:#f8fafc; border-radius:10px; margin-bottom:12px; }
+    .msg-item { max-width:78%; }
+    .msg-item.sent { align-self:flex-end; }
+    .msg-item.recv { align-self:flex-start; }
+    .msg-bubble { padding:10px 14px; border-radius:12px; font-size:14px; line-height:1.5; }
+    .msg-item.sent .msg-bubble { background:var(--teal); color:#fff; border-bottom-right-radius:3px; }
+    .msg-item.recv .msg-bubble { background:#fff; color:var(--dark); border-bottom-left-radius:3px; box-shadow:0 2px 6px rgba(0,0,0,.07); }
+    .msg-time { font-size:10px; color:#aaa; margin-top:3px; text-align:right; }
+    .msg-inp-row { display:flex; gap:8px; }
+    .msg-inp-row input { flex:1; padding:11px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:var(--font-body); }
+    .msg-inp-row button { padding:11px 18px; background:var(--teal); color:#fff; border:none; border-radius:8px; font-size:14px; cursor:pointer; }
+  </style>
+</head>
+<body>
+<section id="header" style="position:sticky;top:0;z-index:100;">
+  <a href="index.html"><img src="img/logo.png" alt="Mirastore" class="logo"></a>
+  <div><ul id="navbar">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shop.html">View Store</a></li>
+    <span id="user-nav-slot"></span>
+    <li id="lg-nag"><a href="#" id="close"><i class="far fa-times"></i></a></li>
+  </ul></div>
+  <div id="mobile"><i id="bar" class="fas fa-bars"></i></div>
+</section>
+
+<div class="dash-layout">
+  <aside class="dash-sidebar">
+    <div class="store-info">
+      <div class="store-avatar" id="sv-avatar">V</div>
+      <div class="store-name" id="sv-name">My Store</div>
+      <div class="store-role">Vendor Account</div>
+    </div>
+    <nav class="dash-nav">
+      <div class="nav-section">Main</div>
+      <a href="#" class="active" onclick="showSec('overview',this)"><i class="fas fa-tachometer-alt"></i> Overview</a>
+      <a href="#" onclick="showSec('orders',this)"><i class="fas fa-shopping-bag"></i> Orders</a>
+      <div class="nav-section">Store</div>
+      <a href="#" onclick="showSec('products',this)"><i class="fas fa-box"></i> Products</a>
+      <a href="#" onclick="showSec('add-product',this)"><i class="fas fa-plus-circle"></i> Add Product</a>
+      <a href="#" onclick="showSec('tracker',this)"><i class="fas fa-table"></i> Inventory & Sales</a>
+      <div class="nav-section">Support</div>
+      <a href="#" onclick="showSec('complaints',this)"><i class="fas fa-flag"></i> Complaints <span id="v-cmpl-badge" style="background:#c0392b;color:#fff;border-radius:10px;font-size:10px;padding:2px 6px;margin-left:4px;display:none;"></span></a>
+      <a href="#" onclick="showSec('messages',this)"><i class="fas fa-comments"></i> Messages</a>
+      <div class="nav-section">Account</div>
+      <a href="#" onclick="showSec('settings',this)"><i class="fas fa-cog"></i> Store Settings</a>
+      <a href="#" onclick="MS.logout();" style="color:#ef4444 !important;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </nav>
+  </aside>
+
+  <main class="dash-main" style="padding:32px;">
+    <div id="plan-banner-wrap"></div>
+
+    <!-- OVERVIEW -->
+    <div id="sec-overview">
+      <div class="dash-header"><h2>Dashboard</h2><p id="v-welcome">Welcome back!</p></div>
+      <div class="stats-grid" id="v-stats"></div>
+      <div class="chart-card"><h4>Sales Performance (Last 6 Months)</h4><canvas id="vSalesChart" height="100"></canvas></div>
+      <div class="dash-table-card"><h4>Recent Orders</h4>
+        <div style="overflow-x:auto;"><table class="dash-table"><thead><tr><th>Order ID</th><th>Buyer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody id="v-recent-orders"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div id="sec-orders" style="display:none;">
+      <div class="dash-header"><h2>Orders</h2><p>Manage all orders containing your products.</p></div>
+      <div class="dash-form-card" style="padding:14px 20px;margin-bottom:16px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-sm btn-edit" onclick="filterOrds('all')">All</button>
+          <button class="btn-sm btn-edit" onclick="filterOrds('pending')">Pending</button>
+          <button class="btn-sm btn-edit" onclick="filterOrds('processing')">Processing</button>
+          <button class="btn-sm btn-edit" onclick="filterOrds('delivered')">Delivered</button>
+          <button class="btn-sm" style="background:#d4edda;color:#155724;" onclick="MS.exportCSV(exportOrders(),'orders.csv')"><i class="fas fa-download"></i> Export</button>
+        </div>
+      </div>
+      <div class="dash-table-card">
+        <div style="overflow-x:auto;"><table class="dash-table"><thead><tr><th>Order ID</th><th>Buyer</th><th>Phone</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="v-orders-table"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div id="sec-products" style="display:none;">
+      <div class="dash-header"><h2>My Products</h2><p>All products listed in your store.</p></div>
+      <div class="dash-form-card" style="padding:12px 20px;margin-bottom:20px;">
+        <button class="btn-teal btn-sm" style="padding:9px 18px;" onclick="showSec('add-product',null)"><i class="fas fa-plus"></i> Add New Product</button>
+        <button class="btn-sm btn-edit" style="margin-left:8px;" onclick="MS.exportCSV(exportProducts(),'products.csv')"><i class="fas fa-download"></i> Export CSV</button>
+      </div>
+      <div class="product-grid-manage" id="v-products-grid"></div>
+    </div>
+
+    <!-- ADD PRODUCT -->
+    <div id="sec-add-product" style="display:none;">
+      <div class="dash-header"><h2>Add New Product</h2><p>Fill in details to list a product.</p></div>
+      <div class="dash-form-card">
+        <div id="prod-ok" class="alert-success"></div>
+        <div class="dash-form-grid">
+          <div class="form-group"><label>Product Name *</label><input type="text" id="pn-name" placeholder="e.g. Wireless Earbuds"></div>
+          <div class="form-group"><label>Price (₦) *</label><input type="number" id="pn-price" placeholder="e.g. 5000"></div>
+          <div class="form-group"><label>Category *</label>
+            <select id="pn-category"><option value="">Select category</option>
+              <option>Electronics</option><option>Fashion</option><option>Books</option>
+              <option>Stationery</option><option>Food & Drinks</option><option>Accessories</option><option>Beauty</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Stock Quantity *</label><input type="number" id="pn-stock" placeholder="e.g. 10"></div>
+        </div>
+        <div class="form-group"><label>Description *</label><textarea id="pn-desc" rows="3" placeholder="Describe your product..."></textarea></div>
+        <div class="form-group">
+          <label>Product Image *</label>
+          <div class="img-method-tabs">
+            <div class="img-tab active" id="tab-url" onclick="switchImgTab('url')"><i class="fas fa-link"></i> Paste URL</div>
+            <div class="img-tab" id="tab-upload" onclick="switchImgTab('upload')"><i class="fas fa-upload"></i> Upload File</div>
+          </div>
+          <div id="img-url-wrap"><input type="text" id="pn-img-url" placeholder="https://... or img/products/n1.jpg" oninput="previewFromUrl()" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;"></div>
+          <div id="img-upload-wrap" style="display:none;">
+            <div class="img-upload-box" onclick="document.getElementById('pn-img-file').click()">
+              <input type="file" id="pn-img-file" accept="image/*" style="display:none;" onchange="previewFromFile(event)">
+              <i class="fas fa-cloud-upload-alt"></i><p><strong>Click to upload</strong> — JPG, PNG, WEBP</p>
+            </div>
+          </div>
+          <img id="pn-img-preview" class="img-preview-box" alt="Preview">
+        </div>
+        <button class="btn-teal" style="padding:12px 28px;" onclick="addProduct()"><i class="fas fa-plus"></i> Add Product</button>
+      </div>
+    </div>
+
+    <!-- TRACKER -->
+    <div id="sec-tracker" style="display:none;">
+      <div class="dash-header"><h2>Inventory & Sales Tracker</h2><p>Monitor stock levels, log restocks and track what sells.</p></div>
+      <div class="dash-table-card" style="margin-bottom:24px;">
+        <h4 style="display:flex;justify-content:space-between;align-items:center;">Current Stock Levels
+          <button class="btn-sm btn-edit" onclick="MS.exportCSV(exportStockData(),'stock.csv')"><i class="fas fa-download"></i> Export</button>
+        </h4>
+        <div style="overflow-x:auto;"><table class="stock-table"><thead><tr><th>Product</th><th>Category</th><th>Price</th><th>In Stock</th><th>Total Sold</th><th>Stock Level</th><th></th></tr></thead><tbody id="stock-tbody"></tbody></table></div>
+      </div>
+      <div class="dash-table-card">
+        <h4 style="display:flex;justify-content:space-between;align-items:center;">Sales Ledger — In / Out
+          <button class="btn-sm btn-edit" onclick="MS.exportCSV(exportLedger(),'ledger.csv')"><i class="fas fa-download"></i> Export</button>
+        </h4>
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <select id="ledger-filter" onchange="renderLedger()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;"><option value="all">All Products</option></select>
+          <button class="btn-sm btn-edit" onclick="document.getElementById('inv-modal').classList.add('open')"><i class="fas fa-plus"></i> Log Entry</button>
+        </div>
+        <div style="overflow-x:auto;"><table class="ledger-table"><thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Qty</th><th>Value</th><th>Note</th></tr></thead><tbody id="ledger-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- COMPLAINTS -->
+    <div id="sec-complaints" style="display:none;">
+      <div class="dash-header"><h2>Complaints</h2><p>Buyer complaints related to your products. Respond to resolve them.</p></div>
+      <div id="v-complaints-list"></div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div id="sec-messages" style="display:none;">
+      <div class="dash-header"><h2>Messages</h2><p>Direct messages from the Mirastore admin team.</p></div>
+      <div style="max-width:680px;">
+        <div class="msg-list" id="v-msg-list"></div>
+        <div class="msg-inp-row">
+          <input type="text" id="v-msg-input" placeholder="Send a message to admin..." onkeydown="if(event.key==='Enter')vendorSendMsg()">
+          <button onclick="vendorSendMsg()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="sec-settings" style="display:none;">
+      <div class="dash-header"><h2>Store Settings</h2><p>Update your store information and payment details.</p></div>
+      <div class="dash-form-card">
+        <h4 style="padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:20px;">Store Information</h4>
+        <div class="dash-form-grid">
+          <div class="form-group"><label>Store Name</label><input type="text" id="set-name"></div>
+          <div class="form-group"><label>Owner Name</label><input type="text" id="set-owner"></div>
+          <div class="form-group"><label>Email</label><input type="email" id="set-email"></div>
+          <div class="form-group"><label>Phone</label><input type="tel" id="set-phone"></div>
+        </div>
+        <div class="form-group"><label>Store Description</label><textarea id="set-desc" rows="3"></textarea></div>
+        <h4 style="padding:14px 0;border-top:1px solid var(--border);margin-top:8px;">Bank Details</h4>
+        <div class="dash-form-grid">
+          <div class="form-group"><label>Account Number</label><input type="text" id="set-acct"></div>
+          <div class="form-group"><label>Bank Name</label><input type="text" id="set-bank"></div>
+        </div>
+        <button class="btn-teal" style="padding:12px 28px;" onclick="saveSettings()"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ORDER MODAL -->
+<div class="modal-overlay" id="v-order-modal">
+  <div class="modal" style="max-width:640px;">
+    <span class="modal-close" onclick="document.getElementById('v-order-modal').classList.remove('open')"><i class="fas fa-times"></i></span>
+    <h2 style="margin-bottom:20px;">Order Details</h2>
+    <div id="v-order-modal-content"></div>
+  </div>
+</div>
+
+<!-- INVENTORY MODAL -->
+<div class="modal-overlay" id="inv-modal">
+  <div class="modal" style="max-width:440px;">
+    <span class="modal-close" onclick="document.getElementById('inv-modal').classList.remove('open')"><i class="fas fa-times"></i></span>
+    <h2 style="margin-bottom:20px;">Log Inventory Entry</h2>
+    <div class="form-group"><label>Product</label><select id="inv-product" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:7px;"></select></div>
+    <div class="form-group"><label>Type</label>
+      <select id="inv-type" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:7px;">
+        <option value="in">IN — Stock Added / Restocked</option>
+        <option value="out">OUT — Sold / Removed</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Quantity</label><input type="number" id="inv-qty" placeholder="e.g. 10" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:7px;"></div>
+    <div class="form-group"><label>Note (optional)</label><input type="text" id="inv-note" placeholder="e.g. Restock from supplier" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:7px;"></div>
+    <button class="btn-teal" style="width:100%;padding:12px;" onclick="submitInventoryEntry()">Log Entry</button>
+  </div>
+</div>
+
+<footer><div class="footer-bottom" style="border-top:none;"><p>© 2025 Mirastore · Nigerian British University</p></div></footer>
+
+<script src="app.js"></script>
+<script>
+let currentVendor=null, currentUser=null, ordFilter='all', uploadedImgData=null;
+
+document.addEventListener('DOMContentLoaded',function(){
+  currentUser = MS.requireAuth('vendor'); if(!currentUser) return;
+  currentVendor = MS.getVendorById(currentUser.vendorId); if(!currentVendor) return;
+  document.getElementById('sv-avatar').textContent = currentVendor.name.charAt(0);
+  document.getElementById('sv-name').textContent = currentVendor.name;
+  document.getElementById('v-welcome').textContent = 'Welcome back, '+currentVendor.owner+' 👋';
+  renderPlanBanner(); renderOverview(); renderSettings(); updateComplaintBadge();
+});
+
+function showSec(name, el){
+  ['overview','orders','products','add-product','tracker','complaints','messages','settings'].forEach(s=>{ document.getElementById('sec-'+s).style.display=s===name?'block':'none'; });
+  document.querySelectorAll('.dash-nav a').forEach(a=>a.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const fns={overview:renderOverview,orders:renderOrders,products:renderProducts,tracker:renderTracker,complaints:renderComplaints,messages:renderMessages};
+  if(fns[name]) fns[name]();
+}
+
+function renderPlanBanner(){
+  const days=MS.getPlanDaysLeft(currentVendor.id); const wrap=document.getElementById('plan-banner-wrap');
+  if(days===null){wrap.innerHTML='';return;}
+  const cls=days>60?'ok':days>14?'warn':'crit';
+  wrap.innerHTML=`<div class="plan-banner ${cls}">${days>60?'✅':days>14?'⚠️':'🚨'} <strong>${currentVendor.plan||''} plan</strong> expires in <strong>${days} day${days!==1?'s':''}</strong> (${MS.formatDate(currentVendor.planExpiry)})${days<=14?' — Contact admin to renew.':''}</div>`;
+}
+
+function getMyOrders(){ const ids=MS.getProducts().filter(p=>p.vendorId===currentVendor.id).map(p=>p.id); return MS.getOrders().filter(o=>o.items.some(i=>ids.includes(i.productId))); }
+
+function renderOverview(){
+  const ords=getMyOrders(), prods=MS.getProducts().filter(p=>p.vendorId===currentVendor.id);
+  const rev=ords.filter(o=>o.paymentStatus==='paid').reduce((s,o)=>s+o.total,0);
+  const pend=ords.filter(o=>o.status==='pending').length;
+  const cmpls=MS.getComplaints().filter(c=>c.vendorId===currentVendor.id&&c.status==='open').length;
+  document.getElementById('v-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-icon">💰</div><h3>${MS.formatPrice(rev)}</h3><p>Revenue (Confirmed)</p></div>
+    <div class="stat-card"><div class="stat-icon">📦</div><h3>${ords.length}</h3><p>Total Orders</p></div>
+    <div class="stat-card"><div class="stat-icon">⏳</div><h3>${pend}</h3><p>Pending Orders</p></div>
+    <div class="stat-card"><div class="stat-icon">🛍️</div><h3>${prods.length}</h3><p>Products</p></div>
+    ${cmpls?`<div class="stat-card" style="border-left-color:#e74c3c;"><div class="stat-icon">🚩</div><h3 style="color:#e74c3c;">${cmpls}</h3><p>Open Complaints</p></div>`:''}
+  `;
+  const ctx=document.getElementById('vSalesChart').getContext('2d');
+  if(window._vC) window._vC.destroy();
+  window._vC=new Chart(ctx,{type:'line',data:{labels:['Nov','Dec','Jan','Feb','Mar','Apr'],datasets:[
+    {label:'Revenue (₦)',data:[45000,62000,48000,75000,88000,rev||50000],borderColor:'#088178',backgroundColor:'rgba(8,129,120,.08)',fill:true,tension:.4},
+    {label:'Orders',data:[5,8,6,9,11,ords.length],borderColor:'#c0392b',backgroundColor:'transparent',tension:.4}
+  ]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true}}}});
+  const recent=getMyOrders().slice(-5).reverse();
+  document.getElementById('v-recent-orders').innerHTML=recent.length===0?'<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--mid);">No orders yet</td></tr>':recent.map(o=>`<tr><td><strong>${o.id}</strong></td><td>${o.buyer}</td><td>${o.items.length}</td><td><strong style="color:var(--primary);">${MS.formatPrice(o.total)}</strong></td><td><span class="badge badge-${o.status}">${o.status}</span></td><td>${MS.formatDate(o.date)}</td><td><button class="btn-sm btn-edit" onclick="viewOrder('${o.id}')">View</button></td></tr>`).join('');
+}
+
+function renderOrders(){
+  let ords=getMyOrders().slice().reverse(); if(ordFilter!=='all') ords=ords.filter(o=>o.status===ordFilter);
+  document.getElementById('v-orders-table').innerHTML=ords.length===0?'<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--mid);">No orders found.</td></tr>':ords.map(o=>`
+    <tr><td><strong>${o.id}</strong></td><td>${o.buyer}</td><td>${o.phone}</td><td>${o.items.length}</td>
+    <td><strong style="color:var(--primary);">${MS.formatPrice(o.total)}</strong></td>
+    <td><span class="badge badge-${o.paymentStatus==='paid'?'paid':'pending'}">${o.paymentStatus}</span></td>
+    <td><span class="badge badge-${o.status}">${o.status}</span></td><td>${MS.formatDate(o.date)}</td>
+    <td style="white-space:nowrap;"><button class="btn-sm btn-edit" onclick="viewOrder('${o.id}')">View</button>
+    ${o.status==='pending'?`<br><button class="btn-sm" style="background:#cce5ff;color:#004085;margin-top:3px;" onclick="updateOrdStatus('${o.id}','processing')">Process</button>`:''}
+    ${o.status==='processing'?`<br><button class="btn-sm" style="background:#d4edda;color:#155724;margin-top:3px;" onclick="updateOrdStatus('${o.id}','delivered')">Delivered</button>`:''}
+    </td></tr>`).join('');
+}
+function filterOrds(f){ordFilter=f;renderOrders();}
+function updateOrdStatus(id,status){const ords=MS.getOrders();const o=ords.find(x=>x.id===id);if(o){o.status=status;MS.saveOrders(ords);}renderOrders();MS.showToast('Order updated!','success');}
+
+function viewOrder(orderId){
+  const o=MS.getOrders().find(x=>x.id===orderId);if(!o)return;
+  const items=o.items.map(i=>{const p=MS.getProductById(i.productId);return`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>${p?p.name:i.productId} × ${i.qty}</span><strong>${MS.formatPrice(i.price*i.qty)}</strong></div>`;}).join('');
+  const deliveryPhoto = MS.getDeliveryPhotoByOrder(o.id);
+  document.getElementById('v-order-modal-content').innerHTML=`
+    <div class="order-detail-row">
+      <div class="order-detail-card"><h4>Order Info</h4><p><strong>ID:</strong> ${o.id}</p><p><strong>Date:</strong> ${MS.formatDate(o.date)}</p><p><strong>Status:</strong> <span class="badge badge-${o.status}">${o.status}</span></p><p><strong>Payment:</strong> <span class="badge badge-${o.paymentStatus==='paid'?'paid':'pending'}">${o.paymentStatus}</span></p><p><strong>Total:</strong> <span style="color:var(--primary);font-size:18px;font-weight:700;">${MS.formatPrice(o.total)}</span></p></div>
+      <div class="order-detail-card"><h4>Delivery</h4><p><strong>Buyer:</strong> ${o.buyer}</p><p><strong>Phone:</strong> ${o.phone}</p><p><strong>Address:</strong> ${o.address}</p>${o.note?`<p><strong>Note:</strong> ${o.note}</p>`:''}</div>
+    </div>
+    <div class="order-detail-card" style="margin-bottom:14px;"><h4>Items</h4>${items}</div>
+    ${o.receiptUrl?`<div class="order-detail-card" style="margin-bottom:14px;"><h4>Payment Receipt</h4><img src="${o.receiptUrl}" class="receipt-img"></div>`:''}
+    ${deliveryPhoto ? `<div class="order-detail-card" style="margin-bottom:14px;"><h4><i class="fas fa-camera" style="color:var(--teal);margin-right:6px;"></i>Delivery Proof Photo</h4><p style="font-size:12px;color:var(--mid);margin-bottom:8px;">Uploaded by buyer on ${new Date(deliveryPhoto.timestamp).toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'})}</p><img src="${deliveryPhoto.photoDataUrl}" style="width:100%;max-height:240px;object-fit:cover;border-radius:8px;border:1px solid var(--border);" alt="Delivery proof"></div>` : `<div class="order-detail-card" style="margin-bottom:14px;"><h4><i class="fas fa-camera" style="color:var(--mid);margin-right:6px;"></i>Delivery Proof Photo</h4><p style="font-size:13px;color:var(--mid);">No delivery photo uploaded yet.</p></div>`}
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      ${o.status==='pending'?`<button class="btn-teal" onclick="updateOrdStatus('${o.id}','processing');document.getElementById('v-order-modal').classList.remove('open')">Mark Processing</button>`:''}
+      ${o.status==='processing'?`<button class="btn-teal" onclick="updateOrdStatus('${o.id}','delivered');document.getElementById('v-order-modal').classList.remove('open')">Mark Delivered</button>`:''}
+    </div>`;
+  document.getElementById('v-order-modal').classList.add('open');
+}
+
+function renderProducts(){
+  const prods=MS.getProducts().filter(p=>p.vendorId===currentVendor.id);
+  document.getElementById('v-products-grid').innerHTML=prods.length===0?'<p style="color:var(--mid);padding:20px;">No products yet.</p>':prods.map(p=>{
+    const canDel = MS.canVendorDeleteProduct(p.id);
+    const delBtn = canDel
+      ? `<button class="btn-sm btn-delete" onclick="deleteProduct('${p.id}')"><i class="fas fa-trash"></i> Remove</button>`
+      : `<span style="font-size:11px;color:var(--mid);display:flex;align-items:center;gap:4px;"><i class="fas fa-lock"></i> Has orders — cannot delete</span>`;
+    return `<div class="product-manage-card"><img src="${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/200x150/e8f6ea/088178?text=Product'"><div class="product-manage-info"><h5>${p.name}</h5><div class="price">${MS.formatPrice(p.price)}</div><div style="font-size:12px;color:var(--mid);margin-bottom:10px;">Stock: ${p.stock} | Sold: ${p.sales}</div><div class="product-manage-actions">${delBtn}</div></div></div>`;
+  }).join('');
+}
+function deleteProduct(id){
+  if (!MS.canVendorDeleteProduct(id)){ MS.showToast('Cannot remove — this product has existing orders or sales records.','error'); return; }
+  if(!confirm('Remove this product? This cannot be undone.'))return;
+  MS.saveProducts(MS.getProducts().filter(p=>p.id!==id));
+  renderProducts(); MS.showToast('Product removed.','success');
+}
+
+function switchImgTab(mode){
+  document.getElementById('tab-url').classList.toggle('active',mode==='url');
+  document.getElementById('tab-upload').classList.toggle('active',mode==='upload');
+  document.getElementById('img-url-wrap').style.display=mode==='url'?'block':'none';
+  document.getElementById('img-upload-wrap').style.display=mode==='upload'?'block':'none';
+  uploadedImgData=null;
+}
+function previewFromUrl(){const url=document.getElementById('pn-img-url').value.trim();const p=document.getElementById('pn-img-preview');if(url){p.src=url;p.style.display='block';}else p.style.display='none';}
+function previewFromFile(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>{uploadedImgData=ev.target.result;const p=document.getElementById('pn-img-preview');p.src=uploadedImgData;p.style.display='block';};r.readAsDataURL(file);}
+
+function addProduct(){
+  const name=document.getElementById('pn-name').value.trim();
+  const price=parseInt(document.getElementById('pn-price').value);
+  const category=document.getElementById('pn-category').value;
+  const stock=parseInt(document.getElementById('pn-stock').value);
+  const desc=document.getElementById('pn-desc').value.trim();
+  const urlImg=document.getElementById('pn-img-url').value.trim();
+  const image=uploadedImgData||urlImg||'https://placehold.co/400x300/e8f6ea/088178?text=Product';
+  if(!name||!price||!category||!stock||!desc){MS.showToast('Fill in all required fields','error');return;}
+  const prods=MS.getProducts();
+  const newP={id:'p'+Date.now(),vendorId:currentVendor.id,name,price,category,description:desc,image,stock,rating:4.5,sales:0};
+  prods.push(newP);MS.saveProducts(prods);
+  const inv=MS.getInventory();inv.push({id:'inv'+Date.now(),vendorId:currentVendor.id,productId:newP.id,type:'in',qty:stock,note:'Initial stock',date:new Date().toISOString().split('T')[0]});MS.saveInventory(inv);
+  const ok=document.getElementById('prod-ok');ok.textContent=`✓ "${name}" added!`;ok.style.display='block';setTimeout(()=>ok.style.display='none',3000);
+  ['pn-name','pn-price','pn-category','pn-stock','pn-desc','pn-img-url'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('pn-img-preview').style.display='none';uploadedImgData=null;
+  MS.showToast('Product added!','success');
+}
+
+function renderTracker(){
+  const prods=MS.getProducts().filter(p=>p.vendorId===currentVendor.id);
+  document.getElementById('stock-tbody').innerHTML=prods.length===0?'<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--mid);">No products yet.</td></tr>':prods.map(p=>{
+    const pct=Math.round((p.stock/(p.stock+p.sales+1))*100);const lvl=p.stock<=3?'low':p.stock<=10?'mid':'';
+    return`<tr><td><strong>${p.name}</strong></td><td>${p.category}</td><td>${MS.formatPrice(p.price)}</td><td><strong style="color:${p.stock<=3?'#e74c3c':p.stock<=10?'#f39c12':'#27ae60'}">${p.stock}</strong></td><td>${p.sales}</td><td><div class="stock-bar"><div class="stock-fill ${lvl}" style="width:${Math.max(5,pct)}%"></div></div></td><td><button class="btn-sm btn-edit" onclick="quickRestock('${p.id}','${p.name}')">Restock</button></td></tr>`;
+  }).join('');
+  const sel=document.getElementById('ledger-filter');
+  sel.innerHTML='<option value="all">All Products</option>'+prods.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  document.getElementById('inv-product').innerHTML=prods.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  renderLedger();
+}
+function renderLedger(){
+  const filter=document.getElementById('ledger-filter').value;
+  let entries=MS.getInventory().filter(e=>e.vendorId===currentVendor.id);
+  if(filter!=='all') entries=entries.filter(e=>e.productId===filter);
+  entries=entries.slice().reverse();
+  document.getElementById('ledger-tbody').innerHTML=entries.length===0?'<tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;">No entries yet.</td></tr>':entries.map(e=>{
+    const p=MS.getProductById(e.productId);const val=p?MS.formatPrice(p.price*e.qty):'—';
+    return`<tr><td>${MS.formatDate(e.date)}</td><td>${p?p.name:e.productId}</td><td><span class="badge badge-${e.type==='in'?'paid':'cancelled'}">${e.type.toUpperCase()}</span></td><td class="${e.type==='in'?'ledger-in':'ledger-out'}">${e.type==='in'?'+':'−'}${e.qty}</td><td class="${e.type==='out'?'ledger-out':''}">${e.type==='out'?val:'—'}</td><td style="color:#64748b;">${e.note||'—'}</td></tr>`;
+  }).join('');
+}
+function submitInventoryEntry(){
+  const productId=document.getElementById('inv-product').value;
+  const type=document.getElementById('inv-type').value;
+  const qty=parseInt(document.getElementById('inv-qty').value);
+  const note=document.getElementById('inv-note').value.trim();
+  if(!qty||qty<1){MS.showToast('Enter a valid quantity','error');return;}
+  const inv=MS.getInventory();inv.push({id:'inv'+Date.now(),vendorId:currentVendor.id,productId,type,qty,note,date:new Date().toISOString().split('T')[0]});MS.saveInventory(inv);
+  const prods=MS.getProducts();const prod=prods.find(p=>p.id===productId);
+  if(prod){prod.stock=Math.max(0,prod.stock+(type==='in'?qty:-qty));MS.saveProducts(prods);}
+  document.getElementById('inv-modal').classList.remove('open');
+  ['inv-qty','inv-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderTracker();MS.showToast('Entry logged!','success');
+}
+function quickRestock(productId,name){
+  const qty=parseInt(prompt(`Restock "${name}" — how many units to add?`));
+  if(!qty||qty<1)return;
+  const inv=MS.getInventory();inv.push({id:'inv'+Date.now(),vendorId:currentVendor.id,productId,type:'in',qty,note:'Quick restock',date:new Date().toISOString().split('T')[0]});MS.saveInventory(inv);
+  const prods=MS.getProducts();const prod=prods.find(p=>p.id===productId);if(prod){prod.stock+=qty;MS.saveProducts(prods);}
+  renderTracker();MS.showToast(`+${qty} units added!`,'success');
+}
+
+function updateComplaintBadge(){
+  const count=MS.getComplaints().filter(c=>c.vendorId===currentVendor.id&&c.status==='open').length;
+  const badge=document.getElementById('v-cmpl-badge');if(badge){badge.textContent=count;badge.style.display=count>0?'inline':'none';}
+}
+function renderComplaints(){
+  const cmpls=MS.getComplaints().filter(c=>c.vendorId===currentVendor.id);
+  const container=document.getElementById('v-complaints-list');
+  if(cmpls.length===0){container.innerHTML='<div style="text-align:center;padding:60px;"><i class="fas fa-check-circle" style="font-size:48px;color:var(--teal);margin-bottom:16px;"></i><h3 style="color:var(--mid);">No complaints</h3></div>';return;}
+  container.innerHTML=cmpls.slice().reverse().map(c=>`
+    <div class="complaint-card ${c.status==='resolved'?'resolved':''}">
+      <div class="complaint-meta">
+        <strong>${c.id}</strong><span class="badge badge-${c.status==='open'?'pending':'paid'}">${c.status}</span>
+        <span style="font-size:12px;color:var(--mid);">${MS.formatDate(c.date)}</span>
+        <span style="font-size:12px;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;">${c.type}</span>
+      </div>
+      <p style="font-size:13px;margin-bottom:8px;"><strong>Buyer:</strong> ${c.buyerName} &nbsp;|&nbsp; <strong>Order:</strong> ${c.orderId}</p>
+      <p style="font-size:14px;color:var(--dark);">${c.description}</p>
+      <div>${(c.replies||[]).map(r=>`<div class="reply-bubble ${r.from==='admin'?'admin-reply':''}"><div class="rb-from">${r.from==='admin'?'Admin':'Vendor'} · ${r.time}</div>${r.text}</div>`).join('')}</div>
+      ${c.status==='open'?`<div style="margin-top:12px;display:flex;gap:8px;"><input type="text" id="ri-${c.id}" placeholder="Your reply..." style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;"><button class="btn-sm btn-edit" onclick="vendorReplyComplaint('${c.id}')">Reply</button></div>`:'<div style="color:var(--teal);font-size:12px;margin-top:8px;"><i class="fas fa-check-circle"></i> Resolved</div>'}
+    </div>`).join('');
+}
+function vendorReplyComplaint(id){const inp=document.getElementById('ri-'+id);if(!inp||!inp.value.trim())return;MS.replyComplaint(id,'vendor',inp.value.trim());inp.value='';renderComplaints();MS.showToast('Reply sent!','success');}
+
+function renderMessages(){
+  const u=MS.getCurrentUser();const msgs=MS.getMessages().filter(m=>m.senderId===u.id||m.receiverId===u.id);
+  const list=document.getElementById('v-msg-list');
+  list.innerHTML=msgs.length===0?'<div style="text-align:center;color:var(--mid);font-size:13px;padding:20px;">No messages yet. Send a message to the admin team.</div>':msgs.map(m=>{const isMe=m.senderId===u.id;return`<div class="msg-item ${isMe?'sent':'recv'}"><div class="msg-bubble">${m.text}</div><div class="msg-time">${new Date(m.timestamp).toLocaleTimeString('en-NG',{hour:'2-digit',minute:'2-digit'})}</div></div>`;}).join('');
+  list.scrollTop=list.scrollHeight;
+}
+function vendorSendMsg(){
+  const u=MS.getCurrentUser();const inp=document.getElementById('v-msg-input');const text=inp.value.trim();if(!text)return;
+  MS.sendMessage(u.id,u.name,'vendor','admin1',text);inp.value='';renderMessages();
+}
+
+function renderSettings(){
+  document.getElementById('set-name').value=currentVendor.name;
+  document.getElementById('set-owner').value=currentVendor.owner;
+  document.getElementById('set-email').value=currentVendor.email;
+  document.getElementById('set-phone').value=currentVendor.phone;
+  document.getElementById('set-desc').value=currentVendor.description;
+  document.getElementById('set-acct').value=currentVendor.account;
+  document.getElementById('set-bank').value=currentVendor.bank;
+}
+function saveSettings(){
+  const vendors=MS.getVendors();const v=vendors.find(x=>x.id===currentVendor.id);
+  if(v){v.name=document.getElementById('set-name').value.trim();v.owner=document.getElementById('set-owner').value.trim();v.email=document.getElementById('set-email').value.trim();v.phone=document.getElementById('set-phone').value.trim();v.description=document.getElementById('set-desc').value.trim();v.account=document.getElementById('set-acct').value.trim();v.bank=document.getElementById('set-bank').value.trim();MS.saveVendors(vendors);currentVendor=v;document.getElementById('sv-name').textContent=v.name;MS.showToast('Settings saved!','success');}
+}
+
+function exportOrders(){return getMyOrders().map(o=>({id:o.id,buyer:o.buyer,phone:o.phone,total:o.total,status:o.status,payment:o.paymentStatus,date:o.date}));}
+function exportProducts(){return MS.getProducts().filter(p=>p.vendorId===currentVendor.id).map(p=>({name:p.name,category:p.category,price:p.price,stock:p.stock,sold:p.sales}));}
+function exportStockData(){return MS.getProducts().filter(p=>p.vendorId===currentVendor.id).map(p=>({product:p.name,category:p.category,price:p.price,stock:p.stock,sold:p.sales}));}
+function exportLedger(){return MS.getInventory().filter(e=>e.vendorId===currentVendor.id).map(e=>{const p=MS.getProductById(e.productId);return{date:e.date,product:p?p.name:e.productId,type:e.type,qty:e.qty,note:e.note};});}
+
+['v-order-modal','inv-modal'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});});
+</script>
+</body>
+</html>

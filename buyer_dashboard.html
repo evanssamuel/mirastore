@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Account — Mirastore</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://kit.fontawesome.com/92e9ab7a63.js" crossorigin="anonymous"></script>
+  <style>
+    .buyer-layout { display:flex; min-height:calc(100vh - 72px); }
+    .buyer-sidebar {
+      width:230px; flex-shrink:0; background:#0f172a;
+      padding:30px 0; position:sticky; top:72px;
+      height:calc(100vh - 72px); overflow-y:auto;
+    }
+    .buyer-sidebar .bav { width:52px; height:52px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:22px; font-weight:700; margin-bottom:10px; }
+    .buyer-sidebar .bname { color:#fff; font-size:15px; font-weight:600; }
+    .buyer-sidebar .brole { color:rgba(255,255,255,.45); font-size:12px; }
+    .bside-info { padding:0 20px 24px; border-bottom:1px solid rgba(255,255,255,.08); margin-bottom:10px; }
+    .bside-nav a { display:flex; align-items:center; gap:12px; padding:12px 22px; font-size:14px; color:rgba(255,255,255,.65); transition:all .2s; border-left:3px solid transparent; }
+    .bside-nav a:hover, .bside-nav a.active { color:#fff; background:rgba(255,255,255,.07); border-left-color:var(--primary); }
+    .bside-nav a i { width:16px; text-align:center; }
+    .buyer-main { flex:1; padding:36px 40px; background:#f1f5f9; overflow-y:auto; }
+    /* Order cards */
+    .order-card { background:#fff; border-radius:14px; padding:24px; box-shadow:var(--shadow); margin-bottom:18px; border:1px solid var(--border); }
+    .order-top { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:18px; }
+    .order-id { font-size:20px; font-weight:700; font-family:var(--font-display); }
+    .order-id-label { font-size:11px; color:var(--mid); text-transform:uppercase; letter-spacing:.5px; margin-bottom:3px; }
+    .order-body { display:flex; gap:24px; flex-wrap:wrap; }
+    .order-items-col { flex:2; min-width:240px; }
+    .order-meta-col { flex:1; min-width:170px; }
+    .col-lbl { font-size:11px; font-weight:700; color:var(--mid); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; }
+    .item-row { display:flex; align-items:center; gap:10px; margin-bottom:9px; }
+    .item-img { width:44px; height:44px; border-radius:7px; object-fit:cover; flex-shrink:0; }
+    .item-name { font-size:13px; font-weight:600; }
+    .item-sub { font-size:12px; color:var(--mid); }
+    .meta-row { font-size:13px; margin-bottom:7px; }
+    .order-total-big { font-size:22px; font-weight:700; color:var(--primary); font-family:var(--font-display); margin-top:8px; }
+    .order-actions { display:flex; gap:10px; margin-top:16px; padding-top:16px; border-top:1px solid var(--border); flex-wrap:wrap; align-items:center; }
+    .pay-alert { background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:12px 16px; margin-top:12px; font-size:13px; line-height:1.7; }
+    /* Delivery upload */
+    .delivery-upload-zone { border:2px dashed var(--border); border-radius:10px; padding:20px; text-align:center; cursor:pointer; transition:all .2s; margin-top:12px; }
+    .delivery-upload-zone:hover { border-color:var(--teal); background:#f0fbf9; }
+    .delivery-upload-zone i { font-size:28px; color:var(--mid); margin-bottom:8px; }
+    .delivery-upload-zone p { font-size:12px; margin:0; color:var(--mid); }
+    .delivery-uploaded { border:1.5px solid var(--teal); background:#f0fbf9; border-radius:10px; padding:12px 16px; margin-top:12px; font-size:13px; color:var(--teal); display:flex; align-items:center; gap:8px; }
+    /* Messages */
+    .msg-list { display:flex; flex-direction:column; gap:10px; max-height:420px; overflow-y:auto; padding:16px; background:#f8fafc; border-radius:10px; margin-bottom:12px; }
+    .msg-item { max-width:78%; }
+    .msg-item.sent { align-self:flex-end; }
+    .msg-item.recv { align-self:flex-start; }
+    .msg-bubble { padding:10px 14px; border-radius:12px; font-size:14px; line-height:1.5; }
+    .msg-item.sent .msg-bubble { background:var(--primary); color:#fff; border-bottom-right-radius:3px; }
+    .msg-item.recv .msg-bubble { background:#fff; color:var(--dark); border-bottom-left-radius:3px; box-shadow:0 2px 6px rgba(0,0,0,.07); }
+    .msg-time { font-size:10px; color:#aaa; margin-top:3px; text-align:right; }
+    .msg-inp-row { display:flex; gap:8px; }
+    .msg-inp-row input { flex:1; padding:11px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:var(--font-body); }
+    .msg-inp-row button { padding:11px 18px; background:var(--primary); color:#fff; border:none; border-radius:8px; font-size:14px; cursor:pointer; }
+    /* Complaints list */
+    .cmpl-card { background:#fff; border-radius:12px; padding:18px; box-shadow:var(--shadow); margin-bottom:12px; border-left:4px solid var(--primary); }
+    .cmpl-card.resolved { border-left-color:var(--teal); }
+    .reply-bub { background:#f0fbf9; border-radius:7px; padding:9px 13px; margin-top:7px; font-size:13px; }
+    .reply-from { font-size:10px; font-weight:700; color:var(--mid); text-transform:uppercase; letter-spacing:.5px; margin-bottom:3px; }
+    @media(max-width:768px){.buyer-layout{flex-direction:column;}.buyer-sidebar{width:100%;height:auto;position:relative;}.buyer-main{padding:20px 16px;}}
+  </style>
+</head>
+<body>
+
+<section id="header" style="position:sticky;top:0;z-index:100;">
+  <a href="index.html"><img src="img/logo.png" alt="Mirastore" class="logo"></a>
+  <div><ul id="navbar">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shop.html">Shop</a></li>
+    <li><a href="cart.html" class="nav-cart-btn"><i class="fa-solid fa-bag-shopping"></i><span class="cart-count" style="display:none;">0</span></a></li>
+    <span id="user-nav-slot"></span>
+    <li id="lg-nag"><a href="#" id="close"><i class="far fa-times"></i></a></li>
+  </ul></div>
+  <div id="mobile">
+    <a href="cart.html" style="position:relative;"><i class="fa-solid fa-bag-shopping" style="font-size:20px;color:var(--primary);"></i><span class="cart-count" style="display:none;"></span></a>
+    <i id="bar" class="fas fa-bars"></i>
+  </div>
+</section>
+
+<div class="buyer-layout">
+  <!-- SIDEBAR -->
+  <aside class="buyer-sidebar">
+    <div class="bside-info">
+      <div class="bav" id="b-avatar">B</div>
+      <div class="bname" id="b-name">My Account</div>
+      <div class="brole">Buyer</div>
+    </div>
+    <nav class="bside-nav">
+      <a href="#" class="active" onclick="showBSec('orders',this)"><i class="fas fa-shopping-bag"></i> My Orders</a>
+      <a href="#" onclick="showBSec('complaints',this)"><i class="fas fa-flag"></i> My Complaints</a>
+      <a href="#" onclick="showBSec('messages',this)"><i class="fas fa-comments"></i> Messages / Support</a>
+      <a href="shop.html"><i class="fas fa-store"></i> Continue Shopping</a>
+      <a href="#" onclick="MS.logout();" style="color:#ef4444 !important;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </nav>
+  </aside>
+
+  <main class="buyer-main">
+
+    <!-- ===== ORDERS ===== -->
+    <div id="bsec-orders">
+      <div class="dash-header"><h2>My Orders</h2><p>Track everything you've ordered on Mirastore.</p></div>
+      <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+        <button class="btn-sm btn-edit" onclick="filterOrders('all')">All</button>
+        <button class="btn-sm btn-edit" onclick="filterOrders('pending')">Pending</button>
+        <button class="btn-sm btn-edit" onclick="filterOrders('processing')">Processing</button>
+        <button class="btn-sm btn-edit" onclick="filterOrders('delivered')">Delivered</button>
+      </div>
+      <div id="orders-list"></div>
+      <div id="no-orders" style="display:none;text-align:center;padding:70px 20px;">
+        <i class="fas fa-box-open" style="font-size:56px;color:var(--border);margin-bottom:16px;display:block;"></i>
+        <h3 style="font-size:20px;margin-bottom:8px;">No orders yet</h3>
+        <p>Browse the store and place your first order.</p>
+        <a href="shop.html" class="btn-primary" style="display:inline-block;margin-top:16px;">Shop Now</a>
+      </div>
+    </div>
+
+    <!-- ===== COMPLAINTS ===== -->
+    <div id="bsec-complaints" style="display:none;">
+      <div class="dash-header"><h2>My Complaints</h2><p>Complaints you have filed. Admin and the vendor will respond here.</p></div>
+      <div id="buyer-complaints-list"></div>
+      <div id="no-complaints" style="display:none;text-align:center;padding:60px 20px;">
+        <i class="fas fa-check-circle" style="font-size:48px;color:var(--teal);margin-bottom:14px;display:block;"></i>
+        <h3 style="font-size:18px;color:var(--mid);">No complaints filed</h3>
+      </div>
+    </div>
+
+    <!-- ===== MESSAGES ===== -->
+    <div id="bsec-messages" style="display:none;">
+      <div class="dash-header"><h2>Messages & Support</h2><p>Chat directly with the Mirastore support team.</p></div>
+      <div style="max-width:680px;">
+        <div style="background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;"><i class="fas fa-headset"></i></div>
+          <div><strong style="font-size:14px;">Mirastore Support</strong><div style="font-size:12px;color:var(--mid);">Admin team · Usually responds within 1–2 hours</div></div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:#27ae60;"><span style="width:8px;height:8px;border-radius:50%;background:#27ae60;display:inline-block;"></span>Online</div>
+        </div>
+        <div class="msg-list" id="buyer-msg-list"></div>
+        <div class="msg-inp-row">
+          <input type="text" id="buyer-msg-inp" placeholder="Type a message to support..." onkeydown="if(event.key==='Enter')buyerSendMsg()">
+          <button onclick="buyerSendMsg()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+        <p style="font-size:12px;color:var(--mid);margin-top:8px;"><i class="fas fa-lock" style="margin-right:4px;"></i>Your messages are private between you and the Mirastore team.</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- COMPLAINT MODAL -->
+<div class="modal-overlay" id="complaint-modal">
+  <div class="modal" style="max-width:520px;">
+    <span class="modal-close" onclick="document.getElementById('complaint-modal').classList.remove('open')"><i class="fas fa-times"></i></span>
+    <h2 style="margin-bottom:6px;">File a Complaint</h2>
+    <p style="font-size:13px;color:var(--mid);margin-bottom:22px;">Your complaint will be visible to both the vendor and the admin team for resolution.</p>
+    <input type="hidden" id="cmp-order-id">
+    <input type="hidden" id="cmp-vendor-id">
+    <div class="form-group">
+      <label>What is the issue?</label>
+      <select id="cmp-type" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--font-body);">
+        <option>Item not received</option>
+        <option>Wrong item delivered</option>
+        <option>Damaged item</option>
+        <option>Payment not confirmed</option>
+        <option>Late delivery</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Describe the problem in detail</label>
+      <textarea id="cmp-desc" rows="4" placeholder="Tell us exactly what happened..."></textarea>
+    </div>
+    <button class="btn-primary" style="width:100%;padding:13px;" onclick="submitComplaint()">
+      <i class="fas fa-flag" style="margin-right:8px;"></i>Submit Complaint
+    </button>
+  </div>
+</div>
+
+<!-- DELIVERY PHOTO MODAL -->
+<div class="modal-overlay" id="delivery-photo-modal">
+  <div class="modal" style="max-width:480px;">
+    <span class="modal-close" onclick="document.getElementById('delivery-photo-modal').classList.remove('open')"><i class="fas fa-times"></i></span>
+    <h2 style="margin-bottom:6px;">Upload Delivery Proof</h2>
+    <p style="font-size:13px;color:var(--mid);margin-bottom:22px;">Take a clear photo of the items you received and upload it here to confirm delivery. Both admin and vendor will see this.</p>
+    <input type="hidden" id="dp-order-id">
+    <div class="delivery-upload-zone" onclick="document.getElementById('dp-file').click()">
+      <input type="file" id="dp-file" accept="image/*" style="display:none;" onchange="previewDeliveryPhoto(event)">
+      <i class="fas fa-camera"></i>
+      <p><strong>Click to upload photo</strong></p>
+      <p>JPG, PNG — clear photo of received items</p>
+    </div>
+    <img id="dp-preview" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:12px;display:none;border:1px solid var(--border);" alt="Preview">
+    <button class="btn-teal" style="width:100%;padding:13px;margin-top:16px;" onclick="submitDeliveryPhoto()">
+      <i class="fas fa-check" style="margin-right:8px;"></i>Confirm Receipt & Submit Photo
+    </button>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-bottom" style="border-top:none;">
+    <p>© 2025 Mirastore · Nigerian British University</p>
+    <a href="index.html" style="color:rgba(255,255,255,.5);font-size:13px;">Back to Home</a>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+let currentFilter = 'all';
+let deliveryPhotoData = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  const user = MS.getCurrentUser();
+  if (user) {
+    document.getElementById('b-avatar').textContent = user.name.charAt(0).toUpperCase();
+    document.getElementById('b-name').textContent = user.name;
+  }
+  renderOrders();
+});
+
+function showBSec(name, el) {
+  ['orders','complaints','messages'].forEach(s => {
+    document.getElementById('bsec-'+s).style.display = s === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.bside-nav a').forEach(a => a.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (name === 'complaints') renderMyComplaints();
+  if (name === 'messages') renderMessages();
+}
+
+function filterOrders(f) { currentFilter = f; renderOrders(); }
+
+function renderOrders() {
+  const user = MS.getCurrentUser();
+  let orders = MS.getOrders();
+  if (user && user.role === 'buyer') {
+    orders = orders.filter(o => o.userId === user.id);
+  }
+  if (currentFilter !== 'all') orders = orders.filter(o => o.status === currentFilter);
+  orders = orders.slice().reverse();
+
+  const container = document.getElementById('orders-list');
+  const noOrders = document.getElementById('no-orders');
+
+  if (orders.length === 0) {
+    noOrders.style.display = 'block';
+    container.innerHTML = '';
+    return;
+  }
+  noOrders.style.display = 'none';
+
+  const sColor = { pending:'#f39c12', processing:'#3498db', delivered:'#27ae60', cancelled:'#e74c3c' };
+  const pColor = { paid:'#27ae60', receipt_uploaded:'#f39c12', pending:'#e74c3c' };
+
+  container.innerHTML = orders.map(order => {
+    const itemsHtml = order.items.map(i => {
+      const p = MS.getProductById(i.productId);
+      return p ? `<div class="item-row">
+        <img src="${p.image}" class="item-img" alt="${p.name}" onerror="this.src='https://placehold.co/44x44/e8f6ea/088178?text=?'">
+        <div><div class="item-name">${p.name}</div><div class="item-sub">Qty: ${i.qty} · ${MS.formatPrice(i.price)}</div></div>
+      </div>` : '';
+    }).join('');
+
+    const sc = sColor[order.status] || '#aaa';
+    const pc = pColor[order.paymentStatus] || '#aaa';
+    const deliveryPhoto = MS.getDeliveryPhotoByOrder(order.id);
+
+    return `<div class="order-card">
+      <div class="order-top">
+        <div>
+          <div class="order-id-label">Order ID</div>
+          <div class="order-id">${order.id}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;background:${sc}22;color:${sc};"><i class="fas fa-circle" style="font-size:8px;"></i> ${order.status.charAt(0).toUpperCase()+order.status.slice(1)}</span>
+          <span style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;background:${pc}22;color:${pc};"><i class="fas fa-credit-card" style="font-size:10px;"></i> ${order.paymentStatus}</span>
+        </div>
+      </div>
+
+      <div class="order-body">
+        <div class="order-items-col">
+          <div class="col-lbl">Items</div>
+          ${itemsHtml}
+        </div>
+        <div class="order-meta-col">
+          <div class="col-lbl">Details</div>
+          <div class="meta-row"><strong>Date:</strong> ${MS.formatDate(order.date)}</div>
+          <div class="meta-row"><strong>Deliver to:</strong> ${order.address}</div>
+          ${order.note ? `<div class="meta-row"><strong>Note:</strong> ${order.note}</div>` : ''}
+          <div class="order-total-big">${MS.formatPrice(order.total)}</div>
+        </div>
+      </div>
+
+      ${order.paymentStatus === 'pending' ? `<div class="pay-alert"><strong><i class="fas fa-exclamation-triangle" style="color:#f39c12;"></i> Payment Needed</strong><br>Transfer <strong>${MS.formatPrice(order.total)}</strong> to <strong>0045 6789 00 — GTBank (Mirastore)</strong> and upload your receipt at checkout.</div>` : ''}
+
+      ${deliveryPhoto ? `<div class="delivery-uploaded"><i class="fas fa-image"></i> Delivery photo uploaded on ${new Date(deliveryPhoto.timestamp).toLocaleDateString('en-NG',{day:'numeric',month:'short'})}</div>` : ''}
+
+      <div class="order-actions">
+        ${(order.status === 'processing') && !deliveryPhoto ? `
+          <button class="btn-teal" style="padding:9px 18px;font-size:13px;" onclick="openDeliveryUpload('${order.id}')">
+            <i class="fas fa-camera"></i> Upload Delivery Photo
+          </button>` : ''}
+        ${order.status === 'processing' && !deliveryPhoto ? `
+          <button style="padding:9px 18px;font-size:13px;font-weight:600;border:1.5px solid var(--teal);color:var(--teal);background:transparent;border-radius:6px;cursor:pointer;" onclick="markReceivedNoPhoto('${order.id}')">
+            <i class="fas fa-check"></i> Mark Received (no photo)
+          </button>` : ''}
+        ${order.status === 'delivered' ? `
+          <span style="color:#27ae60;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;"><i class="fas fa-check-circle"></i> Order Received</span>` : ''}
+        <button style="padding:9px 18px;font-size:13px;font-weight:600;border:1.5px solid var(--primary);color:var(--primary);background:transparent;border-radius:6px;cursor:pointer;" onclick="openComplaint('${order.id}')">
+          <i class="fas fa-flag"></i> File Complaint
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openDeliveryUpload(orderId) {
+  deliveryPhotoData = null;
+  document.getElementById('dp-order-id').value = orderId;
+  document.getElementById('dp-preview').style.display = 'none';
+  document.getElementById('dp-file').value = '';
+  document.getElementById('delivery-photo-modal').classList.add('open');
+}
+
+function previewDeliveryPhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    deliveryPhotoData = ev.target.result;
+    const prev = document.getElementById('dp-preview');
+    prev.src = deliveryPhotoData; prev.style.display = 'block';
+    document.querySelector('.delivery-upload-zone').style.borderColor = 'var(--teal)';
+    document.querySelector('.delivery-upload-zone').style.background = '#f0fbf9';
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitDeliveryPhoto() {
+  if (!deliveryPhotoData) { MS.showToast('Please select a photo first', 'error'); return; }
+  const orderId = document.getElementById('dp-order-id').value;
+  const user = MS.getCurrentUser();
+  MS.addDeliveryPhoto(orderId, user ? user.name : 'Buyer', deliveryPhotoData);
+  document.getElementById('delivery-photo-modal').classList.remove('open');
+  MS.showToast('Delivery confirmed! Photo uploaded. 📸', 'success');
+  deliveryPhotoData = null;
+  renderOrders();
+}
+
+function markReceivedNoPhoto(orderId) {
+  const orders = MS.getOrders();
+  const o = orders.find(x => x.id === orderId);
+  if (o) { o.status = 'delivered'; MS.saveOrders(orders); }
+  MS.showToast('Order marked as received!', 'success');
+  renderOrders();
+}
+
+function openComplaint(orderId) {
+  const order = MS.getOrders().find(o => o.id === orderId);
+  if (!order) return;
+  const firstProd = MS.getProductById(order.items[0]?.productId);
+  document.getElementById('cmp-order-id').value = orderId;
+  document.getElementById('cmp-vendor-id').value = firstProd ? firstProd.vendorId : '';
+  document.getElementById('complaint-modal').classList.add('open');
+}
+
+function submitComplaint() {
+  const orderId = document.getElementById('cmp-order-id').value;
+  const vendorId = document.getElementById('cmp-vendor-id').value;
+  const type = document.getElementById('cmp-type').value;
+  const desc = document.getElementById('cmp-desc').value.trim();
+  if (!desc) { MS.showToast('Please describe the issue', 'error'); return; }
+  const user = MS.getCurrentUser();
+  MS.addComplaint({ orderId, vendorId, buyerId: user ? user.id : 'guest', buyerName: user ? user.name : 'Guest', type, description: desc });
+  MS.showToast('Complaint submitted. Admin & vendor have been notified. 🚩', 'success');
+  document.getElementById('complaint-modal').classList.remove('open');
+  document.getElementById('cmp-desc').value = '';
+}
+
+function renderMyComplaints() {
+  const user = MS.getCurrentUser();
+  const cmpls = MS.getComplaints().filter(c => !user || c.buyerId === user.id).slice().reverse();
+  const container = document.getElementById('buyer-complaints-list');
+  const noCmpls = document.getElementById('no-complaints');
+  if (cmpls.length === 0) { noCmpls.style.display = 'block'; container.innerHTML = ''; return; }
+  noCmpls.style.display = 'none';
+  container.innerHTML = cmpls.map(c => `
+    <div class="cmpl-card ${c.status === 'resolved' ? 'resolved' : ''}">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+        <strong>${c.id}</strong>
+        <span class="badge badge-${c.status==='open'?'pending':'paid'}">${c.status}</span>
+        <span style="font-size:12px;color:var(--mid);">${MS.formatDate(c.date)}</span>
+        <span style="font-size:12px;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;">${c.type}</span>
+      </div>
+      <p style="font-size:14px;color:var(--dark);margin-bottom:8px;">${c.description}</p>
+      ${(c.replies||[]).length > 0 ? `<div>
+        ${c.replies.map(r => `<div class="reply-bub"><div class="reply-from">${r.from === 'admin' ? '🛡️ Admin' : r.from === 'vendor' ? '🏪 Vendor' : '👤 You'} · ${r.time}</div>${r.text}</div>`).join('')}
+      </div>` : '<p style="font-size:12px;color:var(--mid);">Awaiting response from admin/vendor...</p>'}
+      ${c.status === 'resolved' ? '<div style="color:var(--teal);font-size:12px;margin-top:8px;"><i class="fas fa-check-circle"></i> Resolved</div>' : ''}
+    </div>`).join('');
+}
+
+function renderMessages() {
+  const user = MS.getCurrentUser();
+  if (!user) {
+    document.getElementById('buyer-msg-list').innerHTML = '<div style="text-align:center;padding:30px;color:var(--mid);">Please <a href="login.html" style="color:var(--teal);">sign in</a> to send messages.</div>';
+    return;
+  }
+  const msgs = MS.getMessages().filter(m => m.senderId === user.id || m.receiverId === user.id);
+  const list = document.getElementById('buyer-msg-list');
+  list.innerHTML = msgs.length === 0
+    ? `<div class="msg-item recv"><div class="msg-bubble">👋 Hi! Welcome to <strong>Mirastore Support</strong>. How can we help you today?</div><div class="msg-time">Support Team</div></div>`
+    : msgs.map(m => {
+        const isMe = m.senderId === user.id;
+        return `<div class="msg-item ${isMe?'sent':'recv'}">
+          <div class="msg-bubble">${m.text}</div>
+          <div class="msg-time">${new Date(m.timestamp).toLocaleTimeString('en-NG',{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>`;
+      }).join('');
+  list.scrollTop = list.scrollHeight;
+}
+
+function buyerSendMsg() {
+  const user = MS.getCurrentUser();
+  if (!user) { MS.showToast('Please sign in to send messages', 'error'); return; }
+  const inp = document.getElementById('buyer-msg-inp');
+  const text = inp.value.trim(); if (!text) return;
+  MS.sendMessage(user.id, user.name, 'buyer', 'admin1', text);
+  inp.value = '';
+  renderMessages();
+  // Auto-reply after a short delay
+  setTimeout(() => {
+    MS.sendMessage('admin1', 'Support Team', 'admin', user.id, 'Thanks for reaching out! Our team will respond shortly. For urgent issues, call +234 801 234 5678 or visit the admin office.');
+    renderMessages();
+  }, 1800);
+}
+
+['complaint-modal','delivery-photo-modal'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
+});
+</script>
+</body>
+</html>

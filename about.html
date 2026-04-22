@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — Mirastore</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://kit.fontawesome.com/92e9ab7a63.js" crossorigin="anonymous"></script>
+  <style>
+    .about-hero { background:linear-gradient(135deg,#1a1a2e,#0f3460); padding:80px; text-align:center; }
+    .about-hero h1 { color:#fff; margin-bottom:14px; }
+    .about-hero p { color:rgba(255,255,255,0.7); font-size:17px; max-width:600px; margin:0 auto; }
+    .about-section { padding:70px 80px; }
+    .about-grid { display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center; }
+    .about-img { border-radius:16px; overflow:hidden; box-shadow:var(--shadow-hover); }
+    .about-img img { width:100%; height:380px; object-fit:cover; }
+    .value-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-top:50px; }
+    .value-card { background:#fff; border-radius:12px; padding:28px; text-align:center; box-shadow:var(--shadow); border-top:4px solid var(--primary); }
+    .value-card:nth-child(2) { border-top-color:var(--teal); }
+    .value-card:nth-child(3) { border-top-color:var(--accent); }
+    .value-card i { font-size:32px; margin-bottom:14px; }
+    .value-card:nth-child(1) i { color:var(--primary); }
+    .value-card:nth-child(2) i { color:var(--teal); }
+    .value-card:nth-child(3) i { color:var(--accent); }
+    .value-card h4 { margin-bottom:8px; }
+    .team-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:24px; margin-top:40px; }
+    .team-card { background:#fff; border-radius:12px; overflow:hidden; box-shadow:var(--shadow); text-align:center; }
+    .team-card img { width:100%; height:200px; object-fit:cover; }
+    .team-card-info { padding:16px; }
+    .team-card-info h5 { font-size:15px; margin-bottom:4px; }
+    .team-card-info p { font-size:12px; color:var(--teal); margin:0; font-weight:600; }
+    .legal-section { background:#fff; padding:70px 80px; }
+    .legal-tabs { display:flex; gap:12px; margin-bottom:32px; flex-wrap:wrap; }
+    .legal-tab { padding:9px 20px; border-radius:20px; border:2px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; color:var(--mid); }
+    .legal-tab.active { background:var(--dark); color:#fff; border-color:var(--dark); }
+    .legal-panel { display:none; }
+    .legal-panel.active { display:block; }
+    .legal-panel h3 { font-size:22px; margin-bottom:16px; }
+    .legal-panel h4 { font-size:16px; margin:20px 0 8px; color:var(--dark); }
+    .legal-panel p { font-size:14px; line-height:1.9; color:var(--mid); margin-bottom:12px; }
+    .legal-panel ul { padding-left:20px; margin-bottom:12px; }
+    .legal-panel ul li { font-size:14px; line-height:1.9; color:var(--mid); margin-bottom:6px; }
+    @media(max-width:900px) { .about-hero,.about-section,.legal-section { padding:40px 24px; } .about-grid { grid-template-columns:1fr; } .value-cards { grid-template-columns:1fr 1fr; } }
+    @media(max-width:600px) { .value-cards { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+
+<section id="header">
+  <a href="index.html"><img src="img/logo.png" alt="Mirastore" class="logo"></a>
+  <div>
+    <ul id="navbar">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="shop.html">Shop</a></li>
+      <li><a class="active" href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="cart.html" class="nav-cart-btn"><i class="fa-solid fa-bag-shopping"></i><span class="cart-count" style="display:none;">0</span></a></li>
+      <span id="user-nav-slot"></span>
+      <li id="lg-nag"><a href="#" id="close"><i class="far fa-times"></i></a></li>
+    </ul>
+  </div>
+  <div id="mobile">
+    <a href="cart.html" class="nav-cart-btn" style="position:relative;"><i class="fa-solid fa-bag-shopping"></i><span class="cart-count" style="display:none;">0</span></a>
+    <i id="bar" class="fas fa-bars"></i>
+  </div>
+</section>
+
+<!-- ABOUT HERO -->
+<div class="about-hero">
+  <h1>About Mirastore</h1>
+  <p>The official online marketplace for entrepreneurs and shoppers at Nigerian British University.</p>
+</div>
+
+<!-- OUR STORY -->
+<section class="about-section" style="background:#fff;">
+  <div class="about-grid">
+    <div>
+      <h2 style="margin-bottom:16px;">Our Story</h2>
+      <p>Mirastore was created to solve a real problem on campus — students and staff with amazing products to sell had no reliable platform to reach buyers, and buyers had no trusted place to find quality goods from people they know.</p>
+      <p>We built Mirastore as a closed, verified marketplace exclusively for Nigerian British University. Every vendor is manually vetted and approved by the admin before they can list products. Every transaction is tracked, receipts are stored, and both buyers and vendors have full visibility of their activity.</p>
+      <p>Our goal is simple: <strong>empower campus entrepreneurs and make campus shopping safe, easy, and trustworthy.</strong></p>
+    </div>
+    <div class="about-img">
+      <img src="img/about/a1.png" alt="About Mirastore">
+    </div>
+  </div>
+  <div class="value-cards">
+    <div class="value-card"><i class="fas fa-shield-alt"></i><h4>Trusted & Verified</h4><p>Every vendor is manually approved by our admin team before they can start selling.</p></div>
+    <div class="value-card"><i class="fas fa-university"></i><h4>Campus First</h4><p>Built exclusively for Nigerian British University students, staff, and community.</p></div>
+    <div class="value-card"><i class="fas fa-handshake"></i><h4>Fair & Transparent</h4><p>All payments are tracked, receipts stored, and disputes handled professionally.</p></div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section class="about-section" style="background:var(--light-bg);">
+  <h2 style="text-align:center;margin-bottom:10px;">The Team</h2>
+  <p style="text-align:center;color:var(--mid);max-width:500px;margin:0 auto;">The people behind Mirastore — committed to supporting NBU entrepreneurs.</p>
+  <div class="team-grid">
+    <div class="team-card">
+      <img src="img/people/3.png" alt="">
+      <div class="team-card-info"><h5>Platform Admin</h5><p>Founder & Manager</p></div>
+    </div>
+    <div class="team-card">
+      <img src="img/people/3.png" alt="">
+      <div class="team-card-info"><h5>Vendor Support</h5><p>Onboarding & Relations</p></div>
+    </div>
+    <div class="team-card">
+      <img src="img/people/3.png" alt="">
+      <div class="team-card-info"><h5>Order Coordinator</h5><p>Delivery & Logistics</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- LEGAL SECTION -->
+<section class="legal-section" id="terms">
+  <h2 style="margin-bottom:8px;">Legal & Policies</h2>
+  <p style="color:var(--mid);margin-bottom:28px;">Please read our terms carefully before using Mirastore.</p>
+  <div class="legal-tabs">
+    <div class="legal-tab active" onclick="showLegal('terms-panel')">Terms & Conditions</div>
+    <div class="legal-tab" onclick="showLegal('vendor-agreement')">Vendor Agreement</div>
+    <div class="legal-tab" onclick="showLegal('privacy-panel')" id="privacy">Privacy Policy</div>
+    <div class="legal-tab" onclick="showLegal('refund-panel')">Refund Policy</div>
+  </div>
+
+  <div class="legal-panel active" id="terms-panel">
+    <h3>Terms & Conditions</h3>
+    <p><em>Last updated: April 2025</em></p>
+    <h4>1. Acceptance of Terms</h4>
+    <p>By accessing and using Mirastore, you accept and agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use this platform.</p>
+    <h4>2. Who Can Use Mirastore</h4>
+    <p>Mirastore is exclusively available to current students, staff, and authorized members of Nigerian British University. Account registration is open to all campus members. Vendor accounts are granted only upon admin approval.</p>
+    <h4>3. Buyer Responsibilities</h4>
+    <ul>
+      <li>Buyers must provide accurate delivery information at checkout.</li>
+      <li>Payment must be made via bank transfer to the designated Mirastore account only.</li>
+      <li>A receipt must be uploaded as proof of payment for every order.</li>
+      <li>Buyers must mark orders as "received" once goods are collected.</li>
+      <li>False complaints or false payment claims may result in account suspension.</li>
+    </ul>
+    <h4>4. Order & Payment Process</h4>
+    <p>All payments are processed through the Mirastore central bank account. Upon payment verification by the admin, orders are forwarded to the relevant vendor(s) for fulfillment. Mirastore acts as a facilitator and is not directly responsible for the quality of goods sold by vendors.</p>
+    <h4>5. Disputes & Complaints</h4>
+    <p>Any unresolved disputes between buyers and vendors should be submitted through the official Mirastore complaints system. The admin team will investigate and mediate to reach a fair resolution.</p>
+    <h4>6. Prohibited Conduct</h4>
+    <ul>
+      <li>Listing counterfeit, stolen, or illegal goods is strictly prohibited.</li>
+      <li>Harassment of other users, vendors, or admin staff will result in immediate suspension.</li>
+      <li>Attempting to circumvent the platform's payment system is prohibited.</li>
+    </ul>
+  </div>
+
+  <div class="legal-panel" id="vendor-agreement">
+    <h3>Vendor Agreement</h3>
+    <p><em>This agreement applies to all approved vendors on the Mirastore platform.</em></p>
+    <h4>1. Eligibility</h4>
+    <p>Only individuals affiliated with Nigerian British University may become vendors. Each vendor application is reviewed and approved by the Mirastore admin team.</p>
+    <h4>2. Subscription Plans & Fees</h4>
+    <ul>
+      <li><strong>6-Month Plan:</strong> ₦9,000 — valid for 6 months from activation date.</li>
+      <li><strong>1-Year Plan:</strong> ₦15,000 — valid for 12 months from activation date.</li>
+    </ul>
+    <p>Plan fees are non-refundable. Vendors will be notified 14 days before their plan expires. Expired plans result in product listings being hidden until renewal.</p>
+    <h4>3. Vendor Obligations</h4>
+    <ul>
+      <li>Vendors must only list goods they personally own and can deliver.</li>
+      <li>Product descriptions, images, and prices must be accurate and up to date.</li>
+      <li>Vendors must fulfill confirmed orders within the agreed timeline.</li>
+      <li>Vendors must keep their store settings (especially bank account details) current.</li>
+    </ul>
+    <h4>4. Commission & Payouts</h4>
+    <p>Mirastore currently operates as a free-to-list marketplace — no commission is deducted per sale. Vendor fees are subscription-based only. Payment is released to vendors after the admin confirms buyer receipt and order delivery.</p>
+    <h4>5. Suspension & Termination</h4>
+    <p>The admin reserves the right to suspend or terminate any vendor account that violates these terms, receives repeated complaints, engages in fraudulent activity, or fails to fulfill orders. Subscription fees are not refunded upon termination due to misconduct.</p>
+  </div>
+
+  <div class="legal-panel" id="privacy-panel">
+    <h3>Privacy Policy</h3>
+    <p><em>Last updated: April 2025</em></p>
+    <h4>1. Data We Collect</h4>
+    <p>We collect name, email address, phone number, and delivery address when you register or place an order. We also store payment receipt images you upload as proof of payment.</p>
+    <h4>2. How We Use Your Data</h4>
+    <ul>
+      <li>To process your orders and verify payments.</li>
+      <li>To communicate order updates and support messages.</li>
+      <li>To maintain platform security and prevent fraud.</li>
+    </ul>
+    <h4>3. Data Sharing</h4>
+    <p>Your personal data is only shared with the vendor(s) whose products you order, and only to the extent necessary for delivery (name, phone, address). We do not sell or share your data with third parties.</p>
+    <h4>4. Data Storage</h4>
+    <p>Currently, all data is stored locally in your browser's localStorage. In future versions with a backend database, all data will be secured and encrypted. We will update this policy accordingly.</p>
+    <h4>5. Your Rights</h4>
+    <p>You may request deletion of your account and associated data at any time by contacting the admin. We will process such requests within 7 working days.</p>
+  </div>
+
+  <div class="legal-panel" id="refund-panel">
+    <h3>Refund Policy</h3>
+    <h4>1. Eligibility for Refunds</h4>
+    <p>Refunds are considered in the following cases:</p>
+    <ul>
+      <li>The item ordered was not delivered within 5 business days with no explanation.</li>
+      <li>The item delivered was significantly different from the product description.</li>
+      <li>A duplicate payment was made by the buyer in error.</li>
+    </ul>
+    <h4>2. How to Request a Refund</h4>
+    <p>File a complaint through your buyer dashboard or contact the admin directly. Provide your order ID, the reason for the refund, and any supporting evidence (photos, etc).</p>
+    <h4>3. Refund Process</h4>
+    <p>All refund requests are reviewed by the admin team within 3–5 business days. Approved refunds are processed back to the buyer's original payment account within 7 working days.</p>
+    <h4>4. Non-Refundable Cases</h4>
+    <ul>
+      <li>Change of mind after a confirmed delivery.</li>
+      <li>Items picked up but claimed as not received.</li>
+      <li>Vendor subscription fees.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-bottom" style="border-top:none;padding-top:0;">
+    <p>© 2025 Mirastore · Nigerian British University</p>
+    <a href="index.html" style="color:rgba(255,255,255,0.5);font-size:13px;">Back to Home</a>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+function showLegal(id) {
+  document.querySelectorAll('.legal-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.legal-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+// Handle anchor links to #terms, #privacy
+window.addEventListener('DOMContentLoaded', () => {
+  const hash = window.location.hash;
+  if (hash === '#privacy') showLegal('privacy-panel');
+  else if (hash === '#terms') showLegal('terms-panel');
+});
+</script>
+</body>
+</html>

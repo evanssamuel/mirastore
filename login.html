@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Mirastore</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://kit.fontawesome.com/92e9ab7a63.js" crossorigin="anonymous"></script>
+  <style>
+    .auth-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 28px; }
+    .auth-tab { flex: 1; text-align: center; padding: 12px; font-size: 15px; font-weight: 600; color: var(--mid); cursor: pointer; transition: all 0.2s; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+    .auth-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+    .auth-panel { display: none; }
+    .auth-panel.active { display: block; }
+    .force-pw-banner { background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#856404; }
+  </style>
+</head>
+<body>
+
+<section id="header">
+  <a href="index.html"><img src="img/logo.png" alt="Mirastore" class="logo"></a>
+  <div>
+    <ul id="navbar">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="shop.html">Shop</a></li>
+      <li><a href="cart.html" class="nav-cart-btn"><i class="fa-solid fa-bag-shopping"></i><span class="cart-count" style="display:none;">0</span></a></li>
+      <li id="lg-nag"><a href="#" id="close"><i class="far fa-times"></i></a></li>
+    </ul>
+  </div>
+  <div id="mobile">
+    <i id="bar" class="fas fa-bars"></i>
+  </div>
+</section>
+
+<div class="auth-page-wrap">
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Sign In</div>
+      <div class="auth-tab" onclick="switchTab('register')">Create Account</div>
+    </div>
+
+    <!-- LOGIN PANEL -->
+    <div class="auth-panel active" id="login-panel">
+      <div id="force-pw-msg" class="force-pw-banner" style="display:none;">
+        <i class="fas fa-exclamation-triangle"></i> <strong>Security:</strong> You must change your password before continuing.
+      </div>
+      <div id="login-alert" class="alert-error"></div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Your password">
+      </div>
+      <button class="auth-btn" onclick="doLogin()">Sign In <i class="fas fa-arrow-right" style="margin-left:6px;"></i></button>
+      <div style="text-align:center;margin-top:14px;font-size:13px;">
+        <a href="#" onclick="showForgotModal()" style="color:var(--teal);">Forgot password?</a>
+      </div>
+    </div>
+
+    <!-- REGISTER PANEL -->
+    <div class="auth-panel" id="register-panel">
+      <p style="font-size:13px;margin-bottom:20px;background:#e8f8f1;padding:12px;border-radius:8px;color:#1a6b47;">
+        <i class="fas fa-info-circle"></i> <strong>Note:</strong> Register as a buyer. To become a vendor, contact the admin to have your store account created.
+      </p>
+      <div id="register-alert-success" class="alert-success"></div>
+      <div id="register-alert-error" class="alert-error"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" id="reg-firstname" placeholder="First name">
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" id="reg-lastname" placeholder="Last name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="reg-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" id="reg-phone" placeholder="08012345678">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="Create a strong password">
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="reg-confirm" placeholder="Repeat your password">
+      </div>
+      <button class="auth-btn" onclick="doRegister()">Create Account <i class="fas fa-user-plus" style="margin-left:6px;"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div id="forgot-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:none;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <h4 style="margin-bottom:8px;">Reset Password</h4>
+    <p style="font-size:13px;color:#465b52;margin-bottom:20px;">Contact the admin to reset your password. The admin can update credentials from the Admin Dashboard → Users.</p>
+    <div style="background:#f8f6f3;border-radius:8px;padding:14px;font-size:13px;margin-bottom:20px;">
+      <strong>Admin Contact:</strong><br>
+      📧 admin@mirastore.ng<br>
+      📱 Via the platform contact page
+    </div>
+    <button onclick="document.getElementById('forgot-modal').style.display='none'" style="width:100%;padding:12px;background:var(--teal);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Close</button>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-bottom" style="border-top:none;padding-top:0;">
+    <p>© 2025 Mirastore</p>
+    <p><a href="index.html" style="color:rgba(255,255,255,0.5);">Back to Home</a></p>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register')));
+  document.querySelectorAll('.auth-panel').forEach((p, i) => p.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register')));
+}
+
+function showForgotModal() {
+  const m = document.getElementById('forgot-modal');
+  m.style.display = 'flex';
+}
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const alertEl = document.getElementById('login-alert');
+
+  if (!email || !password) { showAlert(alertEl, 'Please fill in all fields.'); return; }
+
+  const users = MS.getUsers();
+  const user = users.find(u => u.email === email && u.password === password);
+
+  if (!user) { showAlert(alertEl, 'Invalid email or password. Please try again.'); return; }
+
+  MS.setCurrentUser(user);
+
+  // Check if admin must change password
+  if (user.mustChangePassword) {
+    MS.showToast('Please change your password to continue.', 'error');
+    setTimeout(() => { window.location.href = 'change_password.html'; }, 1000);
+    return;
+  }
+
+  MS.showToast('Welcome back, ' + user.name + '! 👋', 'success');
+  setTimeout(() => {
+    if (user.role === 'admin') location.href = 'admin_dashboard.html';
+    else if (user.role === 'vendor') location.href = 'vendor_dashboard.html';
+    else location.href = 'index.html';
+  }, 800);
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  if (window.location.hash === '#register') switchTab('register');
+  // Show force password message if redirected
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('forcepw')) {
+    document.getElementById('force-pw-msg').style.display = 'block';
+  }
+});
+
+function doRegister() {
+  const firstName = document.getElementById('reg-firstname').value.trim();
+  const lastName = document.getElementById('reg-lastname').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const phone = document.getElementById('reg-phone').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const confirm = document.getElementById('reg-confirm').value;
+  const alertErr = document.getElementById('register-alert-error');
+  const alertOk = document.getElementById('register-alert-success');
+
+  alertErr.style.display = 'none'; alertOk.style.display = 'none';
+
+  if (!firstName || !lastName || !email || !phone || !password) { showAlert(alertErr, 'Please fill in all fields.'); return; }
+  if (password !== confirm) { showAlert(alertErr, 'Passwords do not match.'); return; }
+  if (password.length < 8) { showAlert(alertErr, 'Password must be at least 8 characters.'); return; }
+
+  const users = MS.getUsers();
+  if (users.find(u => u.email === email)) { showAlert(alertErr, 'An account with this email already exists.'); return; }
+
+  const newUser = {
+    id: 'u' + Date.now(),
+    name: firstName + ' ' + lastName,
+    email, phone, password,
+    role: 'buyer',
+    joinedAt: new Date().toISOString()
+  };
+  users.push(newUser);
+  MS.saveUsers(users);
+
+  alertOk.textContent = 'Account created! You can now sign in.';
+  alertOk.style.display = 'block';
+  setTimeout(() => switchTab('login'), 2000);
+}
+
+function showAlert(el, msg) {
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 5000);
+}
+</script>
+</body>
+</html>

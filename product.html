@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product — Mirastore</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://kit.fontawesome.com/92e9ab7a63.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<section id="header">
+  <a href="index.html"><img src="img/logo.png" alt="Mirastore" class="logo"></a>
+  <div>
+    <ul id="navbar">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="shop.html">Shop</a></li>
+      <li><a href="cart.html" class="nav-cart-btn"><i class="fa-solid fa-bag-shopping"></i><span class="cart-count" style="display:none;">0</span></a></li>
+      <span id="user-nav-slot"></span>
+      <li id="lg-nag"><a href="#" id="close"><i class="far fa-times"></i></a></li>
+    </ul>
+  </div>
+  <div id="mobile">
+    <a href="cart.html" class="nav-cart-btn" style="position:relative;"><i class="fa-solid fa-bag-shopping"></i><span class="cart-count" style="display:none;">0</span></a>
+    <i id="bar" class="fas fa-bars"></i>
+  </div>
+</section>
+
+<div style="padding:20px 80px 10px;font-size:13px;color:var(--mid);">
+  <a href="index.html" style="color:var(--mid);">Home</a> › <a href="shop.html" style="color:var(--mid);">Shop</a> › <span id="breadcrumb-name">Product</span>
+</div>
+
+<div style="padding:30px 80px 60px;display:flex;gap:50px;flex-wrap:wrap;" id="product-detail">
+  <div style="flex:1;min-width:280px;">
+    <img id="main-img" style="width:100%;border-radius:14px;box-shadow:var(--shadow);" alt="Product">
+  </div>
+  <div style="flex:1.2;min-width:280px;">
+    <div id="vendor-tag-detail" style="display:inline-block;background:var(--primary-light);color:var(--primary);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:14px;"></div>
+    <h1 style="font-size:30px;margin-bottom:10px;" id="prod-title">Loading...</h1>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div id="prod-stars" style="color:var(--accent);font-size:16px;"></div>
+      <span id="prod-rating-text" style="font-size:13px;color:var(--mid);"></span>
+    </div>
+    <div style="font-size:32px;font-weight:700;color:var(--primary);font-family:var(--font-display);margin-bottom:16px;" id="prod-price">—</div>
+    <p id="prod-desc" style="font-size:15px;line-height:1.8;margin-bottom:24px;color:var(--mid);"></p>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:8px;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;">
+        <button onclick="changeQty(-1)" style="width:36px;height:40px;border:none;background:#f8f6f3;font-size:18px;cursor:pointer;">−</button>
+        <span id="qty-display" style="min-width:32px;text-align:center;font-weight:600;font-size:16px;">1</span>
+        <button onclick="changeQty(1)" style="width:36px;height:40px;border:none;background:#f8f6f3;font-size:18px;cursor:pointer;">+</button>
+      </div>
+      <span id="stock-info" style="font-size:13px;color:var(--mid);"></span>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <button class="btn-primary" style="flex:2;padding:14px;font-size:15px;" onclick="addToCartFromPage()">
+        <i class="fas fa-cart-plus" style="margin-right:8px;"></i> Add to Cart
+      </button>
+      <a href="cart.html" class="btn-teal" style="flex:1;padding:14px;font-size:15px;text-align:center;" onclick="addToCartFromPage()">
+        Buy Now
+      </a>
+      <button onclick="openBargainModal()" style="flex:1;padding:14px;font-size:15px;background:#fff;border:2px solid var(--teal);color:var(--teal);border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='var(--teal)';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='var(--teal)'">
+        <i class="fas fa-handshake" style="margin-right:8px;"></i> Bargain
+      </button>
+    </div>
+    <div style="margin-top:24px;padding:16px;background:var(--light-bg);border-radius:10px;font-size:13px;color:var(--mid);">
+      <div style="margin-bottom:6px;"><i class="fas fa-store" style="color:var(--teal);margin-right:8px;"></i> Sold by: <a id="vendor-link" href="#" style="color:var(--teal);font-weight:600;"></a></div>
+      <div><i class="fas fa-shield-alt" style="color:var(--teal);margin-right:8px;"></i> Secure purchase · Receipt required for verification</div>
+    </div>
+  </div>
+</div>
+
+<!-- Related Products -->
+<div class="section-p1">
+  <h3 style="margin-bottom:20px;">More from this Vendor</h3>
+  <div class="pro-container" id="related-products"></div>
+</div>
+
+<footer>
+  <div class="footer-bottom" style="border-top:none;"><p>© 2025 Mirastore</p></div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+let currentProduct = null;
+let qty = 1;
+
+document.addEventListener('DOMContentLoaded', function() {
+  const params = new URLSearchParams(window.location.search);
+  const productId = params.get('id');
+  if (!productId) { location.href = 'shop.html'; return; }
+
+  currentProduct = MS.getProductById(productId);
+  if (!currentProduct) { location.href = 'shop.html'; return; }
+
+  const vendor = MS.getVendorById(currentProduct.vendorId);
+
+  document.title = currentProduct.name + ' — Mirastore';
+  document.getElementById('breadcrumb-name').textContent = currentProduct.name;
+  document.getElementById('main-img').src = currentProduct.image;
+  document.getElementById('main-img').alt = currentProduct.name;
+  document.getElementById('prod-title').textContent = currentProduct.name;
+  document.getElementById('prod-desc').textContent = currentProduct.description;
+  document.getElementById('prod-price').textContent = MS.formatPrice(currentProduct.price);
+  document.getElementById('prod-stars').innerHTML = MS.renderStars(currentProduct.rating);
+  document.getElementById('prod-rating-text').textContent = `${currentProduct.rating} · ${currentProduct.sales} sold`;
+  document.getElementById('stock-info').textContent = `${currentProduct.stock} in stock`;
+  document.getElementById('vendor-tag-detail').textContent = vendor ? vendor.name : '';
+  if (vendor) {
+    const vendorLink = document.getElementById('vendor-link');
+    vendorLink.textContent = vendor.name;
+    vendorLink.href = `shop.html?vendor=${vendor.id}`;
+  }
+
+  // Related products
+  const related = MS.getProducts().filter(p => p.vendorId === currentProduct.vendorId && p.id !== currentProduct.id).slice(0, 4);
+  document.getElementById('related-products').innerHTML = related.map(p => `
+    <div class="pro" onclick="location.href='product.html?id=${p.id}'">
+      <img src="${p.image}" alt="${p.name}">
+      <div class="des">
+        <span>${p.category}</span>
+        <h5>${p.name}</h5>
+        <div class="star">${MS.renderStars(p.rating)}</div>
+        <h4>${MS.formatPrice(p.price)}</h4>
+      </div>
+      <a href="#" class="add-cart" onclick="event.stopPropagation();MS.addToCart('${p.id}');return false;"><i class="fas fa-cart-plus"></i></a>
+    </div>
+  `).join('');
+});
+
+function changeQty(delta) {
+  qty = Math.max(1, Math.min(qty + delta, currentProduct?.stock || 10));
+  document.getElementById('qty-display').textContent = qty;
+}
+
+function addToCartFromPage() {
+  if (!currentProduct) return;
+  MS.addToCart(currentProduct.id, qty);
+}
+</script>
+
+<!-- Bargain Modal -->
+<div id="bargain-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h4><i class="fas fa-handshake" style="color:var(--teal);margin-right:8px;"></i> Make an Offer</h4>
+      <button onclick="closeBargainModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;">&times;</button>
+    </div>
+    <div id="bargain-product-info" style="background:var(--light-bg);border-radius:10px;padding:14px;margin-bottom:18px;font-size:14px;"></div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Your Offer Price (₦)</label>
+      <input type="number" id="bargain-price" placeholder="Enter your offer" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:8px;font-size:15px;font-weight:700;color:var(--primary);">
+    </div>
+    <div style="margin-bottom:18px;">
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Message to Vendor (optional)</label>
+      <textarea id="bargain-msg" placeholder="Why are you offering this price?" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:8px;font-size:13px;resize:none;height:80px;"></textarea>
+    </div>
+    <div id="bargain-alert" style="display:none;padding:10px;border-radius:8px;font-size:13px;margin-bottom:14px;background:#fef3cd;color:#856404;"></div>
+    <button onclick="submitBargain()" style="width:100%;padding:14px;background:var(--teal);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">
+      Send Offer <i class="fas fa-paper-plane" style="margin-left:8px;"></i>
+    </button>
+  </div>
+</div>
+
+<script>
+function openBargainModal() {
+  const u = MS.getCurrentUser();
+  if (!u) { MS.showToast("Please sign in to bargain","error"); setTimeout(()=>location.href="login.html",1200); return; }
+  const m = document.getElementById("bargain-modal");
+  const info = document.getElementById("bargain-product-info");
+  if (currentProduct) {
+    info.innerHTML = `<strong>${currentProduct.name}</strong><br>Listed price: <span style="color:var(--primary);font-weight:700;">${MS.formatPrice(currentProduct.price)}</span>`;
+    document.getElementById("bargain-price").value = Math.floor(currentProduct.price * 0.85);
+  }
+  m.style.display = "flex";
+}
+function closeBargainModal() { document.getElementById("bargain-modal").style.display="none"; }
+function submitBargain() {
+  const u = MS.getCurrentUser();
+  if (!u) { location.href = "login.html"; return; }
+  const price = parseInt(document.getElementById("bargain-price").value);
+  const msg = document.getElementById("bargain-msg").value.trim();
+  const alertEl = document.getElementById("bargain-alert");
+  if (!price || price <= 0) { alertEl.textContent="Please enter a valid offer price."; alertEl.style.display="block"; return; }
+  if (price >= currentProduct.price) { alertEl.textContent="Your offer must be lower than the listed price."; alertEl.style.display="block"; return; }
+  if (price < currentProduct.price * 0.3) { alertEl.textContent="Offer is too low. Try a more reasonable amount."; alertEl.style.display="block"; return; }
+  const vendor = MS.getVendorById(currentProduct.vendorId);
+  MS.createBargainRequest(u.id, u.name, currentProduct.vendorId, currentProduct.id, currentProduct.name, currentProduct.price, price, msg);
+  closeBargainModal();
+}
+</script>
+</body>
+</html>
