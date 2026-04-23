@@ -117,7 +117,7 @@
     <p><a href="index.html" style="color:rgba(255,255,255,0.5);">Back to Home</a></p>
   </div>
 </footer>
-
+<script src="config.js"></script>
 <script src="app.js"></script>
 <script>
 function switchTab(tab) {
@@ -130,76 +130,41 @@ function showForgotModal() {
   m.style.display = 'flex';
 }
 
-function doLogin() {
+async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   const alertEl = document.getElementById('login-alert');
 
   if (!email || !password) { showAlert(alertEl, 'Please fill in all fields.'); return; }
 
-  const users = MS.getUsers();
-  const user = users.find(u => u.email === email && u.password === password);
+  try {
+    // Try real API first
+    const data = await apiCall('/auth/login', 'POST', { email, password });
+    
+    // Save user with token to localStorage
+    const user = { ...data.user, token: data.token };
+    MS.setCurrentUser(user);
+    MS.showToast('Welcome back, ' + user.name + '! 👋', 'success');
 
-  if (!user) { showAlert(alertEl, 'Invalid email or password. Please try again.'); return; }
+    setTimeout(() => {
+      if (user.role === 'admin') location.href = 'admin_dashboard.html';
+      else if (user.role === 'vendor') location.href = 'vendor_dashboard.html';
+      else location.href = 'index.html';
+    }, 800);
 
-  MS.setCurrentUser(user);
-
-  // Check if admin must change password
-  if (user.mustChangePassword) {
-    MS.showToast('Please change your password to continue.', 'error');
-    setTimeout(() => { window.location.href = 'change_password.html'; }, 1000);
-    return;
+  } catch (err) {
+    // Fallback to localStorage if API fails
+    const users = MS.getUsers();
+    const user = users.find(u => u.email === email && u.password === password);
+    if (!user) { showAlert(alertEl, 'Invalid email or password.'); return; }
+    MS.setCurrentUser(user);
+    MS.showToast('Welcome back, ' + user.name + '! 👋', 'success');
+    setTimeout(() => {
+      if (user.role === 'admin') location.href = 'admin_dashboard.html';
+      else if (user.role === 'vendor') location.href = 'vendor_dashboard.html';
+      else location.href = 'index.html';
+    }, 800);
   }
-
-  MS.showToast('Welcome back, ' + user.name + '! 👋', 'success');
-  setTimeout(() => {
-    if (user.role === 'admin') location.href = 'admin_dashboard.html';
-    else if (user.role === 'vendor') location.href = 'vendor_dashboard.html';
-    else location.href = 'index.html';
-  }, 800);
-}
-
-window.addEventListener('DOMContentLoaded', function() {
-  if (window.location.hash === '#register') switchTab('register');
-  // Show force password message if redirected
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('forcepw')) {
-    document.getElementById('force-pw-msg').style.display = 'block';
-  }
-});
-
-function doRegister() {
-  const firstName = document.getElementById('reg-firstname').value.trim();
-  const lastName = document.getElementById('reg-lastname').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const phone = document.getElementById('reg-phone').value.trim();
-  const password = document.getElementById('reg-password').value;
-  const confirm = document.getElementById('reg-confirm').value;
-  const alertErr = document.getElementById('register-alert-error');
-  const alertOk = document.getElementById('register-alert-success');
-
-  alertErr.style.display = 'none'; alertOk.style.display = 'none';
-
-  if (!firstName || !lastName || !email || !phone || !password) { showAlert(alertErr, 'Please fill in all fields.'); return; }
-  if (password !== confirm) { showAlert(alertErr, 'Passwords do not match.'); return; }
-  if (password.length < 8) { showAlert(alertErr, 'Password must be at least 8 characters.'); return; }
-
-  const users = MS.getUsers();
-  if (users.find(u => u.email === email)) { showAlert(alertErr, 'An account with this email already exists.'); return; }
-
-  const newUser = {
-    id: 'u' + Date.now(),
-    name: firstName + ' ' + lastName,
-    email, phone, password,
-    role: 'buyer',
-    joinedAt: new Date().toISOString()
-  };
-  users.push(newUser);
-  MS.saveUsers(users);
-
-  alertOk.textContent = 'Account created! You can now sign in.';
-  alertOk.style.display = 'block';
-  setTimeout(() => switchTab('login'), 2000);
 }
 
 function showAlert(el, msg) {

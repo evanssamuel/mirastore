@@ -99,16 +99,38 @@
     <a href="index.html" style="color:rgba(255,255,255,0.5);font-size:13px;">Back to Home</a>
   </div>
 </footer>
-
+<script src="config.js"></script>
 <script src="app.js"></script>
 <script>
+async function loadProductsFromAPI() {
+  try {
+    const products = await apiCall('/products');
+    MS.saveProducts(products.map(p => ({
+      id: p._id,
+      vendorId: p.vendorId?._id || p.vendorId,
+      name: p.name,
+      price: p.price,
+      category: p.category,
+      description: p.description,
+      image: p.image,
+      stock: p.stock,
+      rating: p.rating || 0,
+      sales: p.sales || 0
+    })));
+    return MS.getProducts();
+  } catch (err) {
+    console.log('API unavailable, using local data');
+    return MS.getProducts();
+  }
+}
+
 let allProducts = [];
 let allVendors = [];
 let selectedCategories = new Set();
 let selectedVendors = new Set();
 
-document.addEventListener('DOMContentLoaded', function() {
-  allProducts = MS.getProducts();
+document.addEventListener('DOMContentLoaded', async function() {
+  allProducts = await loadProductsFromAPI();
   allVendors = MS.getVendors();
 
   buildCategoryFilters();
