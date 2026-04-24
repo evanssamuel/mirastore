@@ -171,6 +171,71 @@ function showAlert(el, msg) {
   el.textContent = msg; el.style.display = 'block';
   setTimeout(() => el.style.display = 'none', 5000);
 }
+
+async function doRegister() {
+  const firstName = document.getElementById('reg-firstname').value.trim();
+  const lastName = document.getElementById('reg-lastname').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const phone = document.getElementById('reg-phone').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const confirm = document.getElementById('reg-confirm').value;
+  const alertErr = document.getElementById('register-alert-error');
+  const alertOk = document.getElementById('register-alert-success');
+  const btn = document.querySelector('#register-panel .auth-btn');
+
+  alertErr.style.display = 'none'; alertOk.style.display = 'none';
+
+  if (!firstName || !lastName || !email || !phone || !password) { showAlert(alertErr, 'Please fill in all fields.'); return; }
+  if (password !== confirm) { showAlert(alertErr, 'Passwords do not match.'); return; }
+  if (password.length < 8) { showAlert(alertErr, 'Password must be at least 8 characters.'); return; }
+
+  btn.textContent = 'Creating account...';
+  btn.disabled = true;
+
+  try {
+    await apiCall('/auth/register', 'POST', {
+      name: firstName + ' ' + lastName,
+      email, phone, password
+    });
+    alertOk.textContent = 'Account created successfully! You can now sign in.';
+    alertOk.style.display = 'block';
+    btn.textContent = 'Create Account';
+    btn.disabled = false;
+    setTimeout(() => switchTab('login'), 2000);
+
+  } catch (err) {
+    const users = MS.getUsers();
+    if (users.find(u => u.email === email)) {
+      showAlert(alertErr, 'An account with this email already exists.');
+      btn.textContent = 'Create Account';
+      btn.disabled = false;
+      return;
+    }
+    const newUser = {
+      id: 'u' + Date.now(),
+      name: firstName + ' ' + lastName,
+      email, phone, password,
+      role: 'buyer',
+      joinedAt: new Date().toISOString()
+    };
+    users.push(newUser);
+    MS.saveUsers(users);
+    alertOk.textContent = 'Account created! You can now sign in.';
+    alertOk.style.display = 'block';
+    btn.textContent = 'Create Account';
+    btn.disabled = false;
+    setTimeout(() => switchTab('login'), 2000);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  if (window.location.hash === '#register') switchTab('register');
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('forcepw')) {
+    document.getElementById('force-pw-msg').style.display = 'block';
+  }
+});
+</script>
 </script>
 </body>
 </html>
