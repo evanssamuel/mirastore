@@ -92,6 +92,8 @@
       <div class="nav-section">Community</div>
       <a href="#" onclick="showSec('complaints',this)"><i class="fas fa-flag"></i> Complaints <span id="adm-cmpl-badge" style="background:#e74c3c;color:#fff;border-radius:10px;font-size:10px;padding:2px 6px;margin-left:4px;display:none;"></span></a>
       <a href="#" onclick="showSec('messages',this)"><i class="fas fa-comments"></i> Messages</a>
+      <a href="#" onclick="showSec('chat-monitor',this)"><i class="fas fa-eye"></i> Chat Monitor</a>
+      <a href="#" onclick="showSec('commissions',this)"><i class="fas fa-percent"></i> Commissions</a>
       <a href="#" onclick="showSec('users',this)"><i class="fas fa-users"></i> Users</a>
       <div class="nav-section">Settings</div>
       <a href="#" onclick="showSec('settings',this)"><i class="fas fa-cog"></i> Site Settings</a>
@@ -168,6 +170,7 @@
             </select>
           </div>
           <div class="form-group"><label>Account Number</label><input type="text" id="cv-acct" placeholder="10-digit account number"></div>
+          <div class="form-group"><label>Commission Rate (%)</label><input type="number" id="cv-commission" placeholder="e.g. 10" min="0" max="100" step="0.5" value="10" style=""></div>
           <div class="form-group"><label>Bank Name</label><input type="text" id="cv-bank" placeholder="e.g. GTBank"></div>
         </div>
         <div class="form-group"><label>Store Description</label><textarea id="cv-desc" rows="3" placeholder="Describe what this vendor sells..."></textarea></div>
@@ -248,6 +251,38 @@
         <button class="btn-teal" style="padding:12px 28px;" onclick="MS.showToast('Settings saved!','success')"><i class="fas fa-save"></i> Save Settings</button>
       </div>
     </div>
+  <!-- COMMISSIONS -->
+    <div id="sec-commissions" style="display:none;">
+      <div class="dash-header"><h2>Commission Tracker</h2><p>Auto-calculated commissions. Formula: <strong>Rate% × Qty × Price per item</strong>.</p></div>
+      <div class="stats-grid" id="comm-stats"></div>
+      <div class="dash-table-card" style="margin-top:20px;">
+        <h4 style="display:flex;justify-content:space-between;align-items:center;">Commission Per Vendor <button class="btn-sm" style="background:#d4edda;color:#155724;" onclick="exportCommissions()"><i class="fas fa-download"></i> Export</button></h4>
+        <div style="overflow-x:auto;"><table class="vpay-table"><thead><tr><th>Vendor</th><th>Rate %</th><th>Commission Owed</th><th>Already Paid</th><th>Total Earned</th><th>Action</th></tr></thead><tbody id="comm-vendor-tbody"></tbody></table></div>
+      </div>
+      <div class="dash-table-card" style="margin-top:20px;">
+        <h4>All Commission Entries</h4>
+        <div style="overflow-x:auto;"><table class="vpay-table"><thead><tr><th>Order ID</th><th>Vendor</th><th>Product</th><th>Qty</th><th>Price</th><th>Rate</th><th>Commission</th><th>Status</th><th>Date</th></tr></thead><tbody id="comm-entries-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- CHAT MONITOR -->
+    <div id="sec-chat-monitor" style="display:none;">
+      <div class="dash-header"><h2>Chat Monitor</h2><p>Monitor all conversations between buyers and vendors on the platform.</p></div>
+      <div style="display:grid;grid-template-columns:240px 1fr;gap:20px;max-height:640px;">
+        <div style="background:#fff;border-radius:12px;padding:16px;box-shadow:var(--shadow);overflow-y:auto;">
+          <div style="font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">Vendors</div>
+          <div id="chat-vendor-list"></div>
+        </div>
+        <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;">
+          <div id="chat-monitor-header" style="font-weight:700;font-size:15px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);">Select a vendor</div>
+          <div id="chat-buyer-tabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;"></div>
+          <div id="chat-monitor-conv" style="flex:1;overflow-y:auto;padding:14px;background:#f8fafc;border-radius:10px;display:flex;flex-direction:column;gap:8px;min-height:300px;">
+            <div style="text-align:center;color:var(--mid);font-size:13px;padding:40px;">Select a vendor to monitor conversations</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -280,10 +315,10 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 
 function showSec(name,el){
-  ['overview','orders','products','vendors','create-vendor','vendor-plans','complaints','messages','users','settings'].forEach(s=>{ document.getElementById('sec-'+s).style.display=s===name?'block':'none'; });
+  ['overview','orders','products','vendors','create-vendor','vendor-plans','complaints','messages','chat-monitor','commissions','users','settings'].forEach(s=>{ document.getElementById('sec-'+s).style.display=s===name?'block':'none'; });
   document.querySelectorAll('.dash-nav a').forEach(a=>a.classList.remove('active'));
   if(el) el.classList.add('active');
-  const fns={overview:renderOverview,orders:renderOrders,products:renderProducts,vendors:renderVendors,'vendor-plans':renderVendorPlans,complaints:renderComplaints,messages:renderMessages,users:renderUsers};
+  const fns={overview:renderOverview,orders:renderOrders,products:renderProducts,vendors:renderVendors,'vendor-plans':renderVendorPlans,complaints:renderComplaints,messages:renderMessages,'chat-monitor':renderChatMonitor,commissions:renderCommissions,users:renderUsers};
   if(fns[name]) fns[name]();
 }
 
@@ -303,10 +338,17 @@ function renderOverview(){
     <div class="stat-card"><div class="stat-icon">👥</div><h3>${users.filter(u=>u.role==='buyer').length}</h3><p>Registered Buyers</p></div>
     <div class="stat-card" style="border-left-color:${receiptsPending>0?'#f39c12':'var(--teal)'}"><div class="stat-icon">📄</div><h3 style="color:${receiptsPending>0?'#f39c12':'var(--teal)'}">${receiptsPending}</h3><p>Receipts to Verify</p>${receiptsPending>0?'<div class="trend down">⚠ Action needed</div>':''}</div>
     <div class="stat-card"><div class="stat-icon">🛍️</div><h3>${prods.length}</h3><p>Total Products</p></div>
+    <div class="stat-card" style="border-left-color:#7c3aed;"><div class="stat-icon">💸</div><h3 style="color:#7c3aed;">${MS.formatPrice(MS.getTotalCommissionSummary().totalPending)}</h3><p>Commission Owed</p><div class="trend up" style="color:#7c3aed;">↑ From all vendors</div></div>
   `;
   const ctx1=document.getElementById('aRevChart').getContext('2d');
   if(window._aC1) window._aC1.destroy();
-  window._aC1=new Chart(ctx1,{type:'bar',data:{labels:['Nov','Dec','Jan','Feb','Mar','Apr'],datasets:[{label:'Revenue ₦',data:[85000,120000,98000,145000,168000,rev||50000],backgroundColor:'rgba(245,158,11,0.85)',borderRadius:6}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+  // Build real monthly revenue from orders
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now=new Date(); const revenueByMonth=Array(6).fill(0); const ordersByMonth=Array(6).fill(0);
+  const labels=[];
+  for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);labels.push(months[d.getMonth()]+' '+d.getFullYear().toString().slice(2));}
+  ords.forEach(o=>{const od=new Date(o.date);const diff=(now.getFullYear()-od.getFullYear())*12+(now.getMonth()-od.getMonth());if(diff>=0&&diff<6){const idx=5-diff;revenueByMonth[idx]+=(o.paymentStatus==='paid'?o.total:0);ordersByMonth[idx]++;}});
+  window._aC1=new Chart(ctx1,{type:'bar',data:{labels,datasets:[{label:'Revenue ₦',data:revenueByMonth,backgroundColor:'rgba(245,158,11,0.85)',borderRadius:6}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
   const st={pending:0,processing:0,delivered:0,cancelled:0};ords.forEach(o=>{if(st[o.status]!==undefined)st[o.status]++;});
   const ctx2=document.getElementById('aOrdChart').getContext('2d');
   if(window._aC2) window._aC2.destroy();
@@ -553,13 +595,104 @@ function createVendor(){
   const vendorId='v'+Date.now();
   const expiry=new Date();expiry.setMonth(expiry.getMonth()+cvPlanSel.months);
   const vendors=MS.getVendors();
-  vendors.push({id:vendorId,name:store,owner,email,phone,category:cat,account:acct,bank,description:desc,status:'active',joined:new Date().toISOString().split('T')[0],plan:cvPlanSel.plan,planExpiry:expiry.toISOString().split('T')[0],planFee:cvPlanSel.fee,planPaid:false});
+  const commissionRate=parseFloat(document.getElementById('cv-commission').value)||10;
+  vendors.push({id:vendorId,name:store,owner,email,phone,category:cat,account:acct,bank,description:desc,status:'active',joined:new Date().toISOString().split('T')[0],plan:cvPlanSel.plan,planExpiry:expiry.toISOString().split('T')[0],planFee:cvPlanSel.fee,planPaid:false,commissionRate});
   MS.saveVendors(vendors);
   const users=MS.getUsers();users.push({id:vendorId,name:store,email,phone,password:pass,role:'vendor',vendorId});MS.saveUsers(users);
   const pmts=MS.getVendorPayments();pmts.push({id:'vp'+Date.now(),vendorId,amount:cvPlanSel.fee,plan:cvPlanSel.plan,status:'pending',date:new Date().toISOString().split('T')[0],note:'Account creation'});MS.saveVendorPayments(pmts);
   ok.innerHTML=`✓ Vendor "<strong>${store}</strong>" created! Login: <strong>${email}</strong> / <strong>${pass}</strong>. Plan: <strong>${cvPlanSel.plan}</strong> (${MS.formatPrice(cvPlanSel.fee)} — pending payment).`;ok.style.display='block';
   MS.showToast('Vendor created!','success');
   ['cv-store','cv-owner','cv-email','cv-phone','cv-pass','cv-cat','cv-acct','cv-bank','cv-desc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+
+
+function renderCommissions(){
+  const summary=MS.getTotalCommissionSummary();
+  document.getElementById('comm-stats').innerHTML=`
+    <div class="stat-card" style="border-left-color:#7c3aed;"><div class="stat-icon">💰</div><h3 style="color:#7c3aed;">${MS.formatPrice(summary.totalEarned)}</h3><p>Total Commissions Earned</p></div>
+    <div class="stat-card" style="border-left-color:#f39c12;"><div class="stat-icon">⏳</div><h3 style="color:#f39c12;">${MS.formatPrice(summary.totalPending)}</h3><p>Pending (Owed to You)</p></div>
+    <div class="stat-card" style="border-left-color:#27ae60;"><div class="stat-icon">✅</div><h3 style="color:#27ae60;">${MS.formatPrice(summary.totalPaid)}</h3><p>Already Paid Out</p></div>
+  `;
+  const vendors=MS.getVendors();
+  document.getElementById('comm-vendor-tbody').innerHTML=vendors.length===0?'<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--mid);">No vendors yet.</td></tr>':vendors.map(v=>{
+    const s=MS.getVendorCommissionSummary(v.id);
+    return`<tr>
+      <td><strong>${v.name}</strong><br><span style="font-size:11px;color:var(--mid);">${v.owner}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="number" value="${v.commissionRate||0}" min="0" max="100" step="0.5" style="width:60px;padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;" id="cr-${v.id}">
+          <span style="font-size:12px;color:var(--mid);">%</span>
+          <button class="btn-sm btn-edit" onclick="updateCommRate('${v.id}')">Set</button>
+        </div>
+      </td>
+      <td><strong style="color:#f39c12;">${MS.formatPrice(s.pending)}</strong></td>
+      <td><strong style="color:#27ae60;">${MS.formatPrice(s.paid)}</strong></td>
+      <td><strong>${MS.formatPrice(s.pending+s.paid)}</strong></td>
+      <td>${s.pending>0?`<button class="btn-sm" style="background:#d4edda;color:#155724;" onclick="markVendorCommPaid('${v.id}')"><i class="fas fa-check"></i> Mark Paid</button>`:'<span style="color:var(--mid);font-size:12px;">All clear</span>'}</td>
+    </tr>`;
+  }).join('');
+  const entries=MS.getCommissions().slice().reverse();
+  document.getElementById('comm-entries-tbody').innerHTML=entries.length===0?'<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--mid);">No commission entries yet. Commissions are auto-calculated when orders are placed.</td></tr>':entries.map(c=>`<tr><td><strong>${c.orderId}</strong></td><td>${c.vendorName}</td><td>${c.productName}</td><td>${c.qty}</td><td>${MS.formatPrice(c.pricePerItem)}</td><td>${c.commissionRate}%</td><td><strong style="color:#7c3aed;">${MS.formatPrice(c.commissionAmount)}</strong></td><td><span class="badge badge-${c.status==='paid'?'paid':'pending'}">${c.status}</span></td><td>${MS.formatDate(c.date)}</td></tr>`).join('');
+}
+
+function updateCommRate(vendorId){
+  const inp=document.getElementById('cr-'+vendorId);
+  const rate=parseFloat(inp.value)||0;
+  MS.setVendorCommissionRate(vendorId,rate);
+  MS.showToast('Commission rate updated to '+rate+'%!','success');
+  renderCommissions();
+}
+
+function markVendorCommPaid(vendorId){
+  MS.markCommissionPaid(vendorId);
+  MS.showToast('Commission marked as paid!','success');
+  renderCommissions();
+}
+
+function exportCommissions(){
+  MS.exportCSV(MS.getCommissions().map(c=>({orderId:c.orderId,vendor:c.vendorName,product:c.productName,qty:c.qty,price:c.pricePerItem,rate:c.commissionRate+'%',commission:c.commissionAmount,status:c.status,date:c.date})),'commissions.csv');
+}
+
+let chatMonitorVendor=null, chatMonitorBuyer=null;
+function renderChatMonitor(){
+  const vendors=MS.getVendors();
+  const vList=document.getElementById('chat-vendor-list');
+  if(!vList)return;
+  if(vendors.length===0){vList.innerHTML='<p style="font-size:13px;color:var(--mid);">No vendors yet.</p>';return;}
+  vList.innerHTML=vendors.map(v=>`<div style="padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:6px;background:${chatMonitorVendor===v.id?'var(--light-bg)':'transparent'};" onclick="selectChatVendor('${v.id}','${v.name}')" onmouseover="this.style.background='var(--light-bg)'" onmouseout="this.style.background='${chatMonitorVendor===v.id?'var(--light-bg)':'transparent'}'">
+    <div style="font-size:13px;font-weight:600;">${v.name}</div>
+    <div style="font-size:11px;color:var(--mid);">${v.owner}</div>
+  </div>`).join('');
+}
+
+function selectChatVendor(vendorId, vendorName){
+  chatMonitorVendor=vendorId; chatMonitorBuyer=null;
+  document.getElementById('chat-monitor-header').textContent='Chats for: '+vendorName;
+  // Get all orders for this vendor and find unique buyers
+  const vProds=MS.getProducts().filter(p=>p.vendorId===vendorId).map(p=>p.id);
+  const vOrders=MS.getOrders().filter(o=>o.items.some(i=>vProds.includes(i.productId)));
+  const buyers=[...new Set(vOrders.map(o=>o.userId||o.buyer))];
+  const buyerTabs=document.getElementById('chat-buyer-tabs');
+  // Also check messages
+  const msgs=MS.getMessages().filter(m=>m.receiverId===vendorId||m.senderId===vendorId);
+  const msgBuyers=[...new Set(msgs.map(m=>m.senderId===vendorId?m.receiverId:m.senderId))];
+  const allBuyerIds=[...new Set([...buyers,...msgBuyers])];
+  const users=MS.getUsers();
+  if(allBuyerIds.length===0){buyerTabs.innerHTML='<span style="font-size:13px;color:var(--mid);">No conversations yet for this vendor.</span>';document.getElementById('chat-monitor-conv').innerHTML='<div style="text-align:center;color:var(--mid);font-size:13px;padding:40px;">No conversations yet</div>';return;}
+  buyerTabs.innerHTML='<div style="font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.5px;width:100%;margin-bottom:4px;">Select Buyer:</div>'+allBuyerIds.map(bid=>{const u=users.find(x=>x.id===bid);const name=u?u.name:(vOrders.find(o=>o.userId===bid||o.buyer===bid)?.buyer||bid);return`<button class="btn-sm btn-edit" onclick="viewBuyerChat('${vendorId}','${bid}','${name}')" style="margin-bottom:4px;">${name}</button>`;}).join('');
+  document.getElementById('chat-monitor-conv').innerHTML='<div style="text-align:center;color:var(--mid);font-size:13px;padding:40px;">Select a buyer to view conversation</div>';
+  renderChatMonitor();
+}
+
+function viewBuyerChat(vendorId, buyerId, buyerName){
+  chatMonitorBuyer=buyerId;
+  const msgs=MS.getMessages().filter(m=>(m.senderId===buyerId&&m.receiverId===vendorId)||(m.senderId===vendorId&&m.receiverId===buyerId));
+  const conv=document.getElementById('chat-monitor-conv');
+  const vendor=MS.getVendorById(vendorId);
+  document.getElementById('chat-monitor-header').textContent='Conversation: '+buyerName+' ↔ '+(vendor?vendor.name:'Vendor');
+  if(msgs.length===0){conv.innerHTML='<div style="text-align:center;color:var(--mid);font-size:13px;padding:40px;">No direct messages between these two yet.</div>';return;}
+  conv.innerHTML=msgs.map(m=>{const isVendor=m.senderId===vendorId;return`<div style="align-self:${isVendor?'flex-end':'flex-start'};max-width:78%;"><div style="padding:10px 14px;border-radius:12px;font-size:14px;background:${isVendor?'#0f172a':'#fff'};color:${isVendor?'#fff':'var(--dark)'};box-shadow:0 2px 6px rgba(0,0,0,.07);">${m.text}</div><div style="font-size:10px;color:#aaa;margin-top:3px;text-align:${isVendor?'right':'left'}">${m.senderName} · ${new Date(m.timestamp).toLocaleTimeString('en-NG',{hour:'2-digit',minute:'2-digit'})}</div></div>`;}).join('');
+  conv.scrollTop=conv.scrollHeight;
 }
 
 // Modal close on overlay

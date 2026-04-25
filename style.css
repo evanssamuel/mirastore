@@ -820,3 +820,61 @@ footer {
 /* ======= PASSWORD CHANGE STYLES ======= */
 .auth-page-wrap { min-height: calc(100vh - var(--header-height) - 60px); display: flex; align-items: center; justify-content: center; padding: 40px 16px; }
 .auth-card { background: #fff; border-radius: 20px; padding: 40px; max-width: 440px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,0.1); }
+
+/* ===== HEADER SINGLE LINE FIX ===== */
+#header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap;
+}
+#header #navbar {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex-wrap: nowrap;
+  gap: 4px;
+  padding: 0;
+  margin: 0;
+  white-space: nowrap;
+}
+#header #navbar li {
+  display: inline-flex !important;
+  align-items: center;
+}
+#header #navbar a {
+  white-space: nowrap;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+#header #navbar span#user-nav-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+#header #navbar span#user-nav-slot li {
+  display: inline-flex;
+}
+.nav-user-btn {
+  background: var(--primary);
+  color: #fff !important;
+  border-radius: 6px;
+  padding: 7px 14px !important;
+  font-size: 13px !important;
+  font-weight: 600;
+}
+.nav-user-btn:hover { background: var(--primary-dark) !important; }
+.nav-logout-btn {
+  color: var(--primary) !important;
+  padding: 7px 10px !important;
+  font-size: 16px !important;
+}
+
+/* ===== COMMISSION BADGE STYLE ===== */
+.comm-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #f3e8ff; color: #7c3aed;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700;
+}

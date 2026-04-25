@@ -220,6 +220,24 @@ document.addEventListener('DOMContentLoaded', function() {
   renderCart();
 });
 
+function getVendorBankDetails(cartItems) {
+  // Get unique vendors from cart
+  const vendorIds = [...new Set(cartItems.map(i => {
+    const p = MS.getProductById(i.productId);
+    return p ? p.vendorId : null;
+  }).filter(Boolean))];
+  
+  return vendorIds.map(vid => {
+    const v = MS.getVendorById(vid);
+    if (!v || !v.account) return '';
+    return `<div style="background:#0f172a;color:#fff;border-radius:10px;padding:16px;margin-bottom:10px;">
+      <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Pay to: ${v.name}</div>
+      <div style="font-size:24px;font-weight:700;letter-spacing:3px;color:#f59e0b;font-family:monospace;">${v.account}</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.7);margin-top:4px;">Bank: ${v.bank||'—'} &nbsp;|&nbsp; Name: ${v.owner}</div>
+    </div>`;
+  }).join('');
+}
+
 function renderCart() {
   const cart = MS.getCart();
   const emptyDiv = document.getElementById('empty-cart');

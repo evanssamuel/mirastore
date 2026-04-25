@@ -296,6 +296,7 @@ function renderOverview(){
     <div class="stat-card"><div class="stat-icon">⏳</div><h3>${pend}</h3><p>Pending Orders</p></div>
     <div class="stat-card"><div class="stat-icon">🛍️</div><h3>${prods.length}</h3><p>Products</p></div>
     ${cmpls?`<div class="stat-card" style="border-left-color:#e74c3c;"><div class="stat-icon">🚩</div><h3 style="color:#e74c3c;">${cmpls}</h3><p>Open Complaints</p></div>`:''}
+    <div class="stat-card" style="border-left-color:#7c3aed;"><div class="stat-icon">💸</div><h3 style="color:#7c3aed;">${MS.formatPrice(MS.getVendorCommissionSummary(currentVendor.id).pending)}</h3><p>Commission Owed</p></div>
   `;
   const ctx=document.getElementById('vSalesChart').getContext('2d');
   if(window._vC) window._vC.destroy();
@@ -325,6 +326,9 @@ function updateOrdStatus(id,status){const ords=MS.getOrders();const o=ords.find(
 function viewOrder(orderId){
   const o=MS.getOrders().find(x=>x.id===orderId);if(!o)return;
   const items=o.items.map(i=>{const p=MS.getProductById(i.productId);return`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>${p?p.name:i.productId} × ${i.qty}</span><strong>${MS.formatPrice(i.price*i.qty)}</strong></div>`;}).join('');
+  // Commission info for this order
+  const commEntries=MS.getCommissions().filter(c=>c.orderId===o.id&&MS.getVendorById(c.vendorId)?.id===currentVendor.id);
+  const totalComm=commEntries.reduce((s,c)=>s+c.commissionAmount,0);
   const deliveryPhoto = MS.getDeliveryPhotoByOrder(o.id);
   document.getElementById('v-order-modal-content').innerHTML=`
     <div class="order-detail-row">
@@ -334,9 +338,11 @@ function viewOrder(orderId){
     <div class="order-detail-card" style="margin-bottom:14px;"><h4>Items</h4>${items}</div>
     ${o.receiptUrl?`<div class="order-detail-card" style="margin-bottom:14px;"><h4>Payment Receipt</h4><img src="${o.receiptUrl}" class="receipt-img"></div>`:''}
     ${deliveryPhoto ? `<div class="order-detail-card" style="margin-bottom:14px;"><h4><i class="fas fa-camera" style="color:var(--teal);margin-right:6px;"></i>Delivery Proof Photo</h4><p style="font-size:12px;color:var(--mid);margin-bottom:8px;">Uploaded by buyer on ${new Date(deliveryPhoto.timestamp).toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'})}</p><img src="${deliveryPhoto.photoDataUrl}" style="width:100%;max-height:240px;object-fit:cover;border-radius:8px;border:1px solid var(--border);" alt="Delivery proof"></div>` : `<div class="order-detail-card" style="margin-bottom:14px;"><h4><i class="fas fa-camera" style="color:var(--mid);margin-right:6px;"></i>Delivery Proof Photo</h4><p style="font-size:13px;color:var(--mid);">No delivery photo uploaded yet.</p></div>`}
-    <div style="display:flex;gap:10px;margin-top:14px;">
-      ${o.status==='pending'?`<button class="btn-teal" onclick="updateOrdStatus('${o.id}','processing');document.getElementById('v-order-modal').classList.remove('open')">Mark Processing</button>`:''}
-      ${o.status==='processing'?`<button class="btn-teal" onclick="updateOrdStatus('${o.id}','delivered');document.getElementById('v-order-modal').classList.remove('open')">Mark Delivered</button>`:''}
+    ${totalComm>0?`<div style="background:#f3e8ff;border:1px solid #c4b5fd;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;"><strong style="color:#7c3aed;">💸 Commission:</strong> ${MS.formatPrice(totalComm)} owed to admin (${commEntries[0]?.commissionRate||0}% rate)</div>`:''}
+    ${!o.vendorPaymentConfirmed?`<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;"><strong><i class="fas fa-exclamation-triangle" style="color:#f39c12;"></i> Awaiting Your Confirmation</strong><br>Has the buyer paid into your account? Click below to confirm.</div>`:''}
+    <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+      ${!o.vendorPaymentConfirmed&&o.status==='pending'?`<button class="btn-teal" onclick="confirmPaymentReceived('${o.id}');document.getElementById('v-order-modal').classList.remove('open')"><i class="fas fa-money-bill-wave"></i> Confirm Payment Received</button>`:''}
+      ${o.vendorPaymentConfirmed&&o.status==='processing'?`<button class="btn-teal" onclick="updateOrdStatus('${o.id}','delivered');document.getElementById('v-order-modal').classList.remove('open')">Mark Delivered</button>`:''}
     </div>`;
   document.getElementById('v-order-modal').classList.add('open');
 }
@@ -481,6 +487,14 @@ function exportOrders(){return getMyOrders().map(o=>({id:o.id,buyer:o.buyer,phon
 function exportProducts(){return MS.getProducts().filter(p=>p.vendorId===currentVendor.id).map(p=>({name:p.name,category:p.category,price:p.price,stock:p.stock,sold:p.sales}));}
 function exportStockData(){return MS.getProducts().filter(p=>p.vendorId===currentVendor.id).map(p=>({product:p.name,category:p.category,price:p.price,stock:p.stock,sold:p.sales}));}
 function exportLedger(){return MS.getInventory().filter(e=>e.vendorId===currentVendor.id).map(e=>{const p=MS.getProductById(e.productId);return{date:e.date,product:p?p.name:e.productId,type:e.type,qty:e.qty,note:e.note};});}
+
+function confirmPaymentReceived(orderId){
+  if(!confirm('Confirm that the buyer has paid into your account for order '+orderId+'?')) return;
+  MS.vendorConfirmPaymentReceived(orderId);
+  MS.showToast('Payment confirmed! Order is now processing.','success');
+  renderOrders();
+  renderOverview();
+}
 
 ['v-order-modal','inv-modal'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});});
 </script>
