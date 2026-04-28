@@ -93,6 +93,7 @@
       <a href="#" onclick="showSec('complaints',this)"><i class="fas fa-flag"></i> Complaints <span id="adm-cmpl-badge" style="background:#e74c3c;color:#fff;border-radius:10px;font-size:10px;padding:2px 6px;margin-left:4px;display:none;"></span></a>
       <a href="#" onclick="showSec('messages',this)"><i class="fas fa-comments"></i> Messages</a>
       <a href="#" onclick="showSec('chat-monitor',this)"><i class="fas fa-eye"></i> Chat Monitor</a>
+      <a href="#" onclick="showSec('processing',this)"><i class="fas fa-tasks"></i> Processing</a>
       <a href="#" onclick="showSec('commissions',this)"><i class="fas fa-percent"></i> Commissions</a>
       <a href="#" onclick="showSec('users',this)"><i class="fas fa-users"></i> Users</a>
       <div class="nav-section">Settings</div>
@@ -183,17 +184,6 @@
         <input type="hidden" id="cv-plan-months" value="6">
         <input type="hidden" id="cv-plan-fee" value="15000">
         <button class="btn-teal" style="padding:12px 28px;" onclick="createVendor()"><i class="fas fa-user-plus"></i> Create Vendor Account</button>
-      </div>
-    </div>
-
-    <!-- VENDOR PLANS (Spreadsheet) -->
-    <div id="sec-vendor-plans" style="display:none;">
-      <div class="dash-header"><h2>Vendor Plans & Payments</h2><p>Track subscription status for all vendors. Export for your records.</p></div>
-      <div class="dash-form-card" style="padding:12px 20px;margin-bottom:16px;">
-        <button class="btn-sm" style="background:#d4edda;color:#155724;" onclick="exportVendorPlans()"><i class="fas fa-download"></i> Export as CSV</button>
-      </div>
-      <div class="dash-table-card">
-        <div style="overflow-x:auto;"><table class="vpay-table"><thead><tr><th>Vendor</th><th>Owner</th><th>Plan</th><th>Plan Fee</th><th>Plan Paid</th><th>Expiry Date</th><th>Days Left</th><th>Status</th><th>Actions</th></tr></thead><tbody id="vpay-tbody"></tbody></table></div>
       </div>
     </div>
 
@@ -315,10 +305,10 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 
 function showSec(name,el){
-  ['overview','orders','products','vendors','create-vendor','vendor-plans','complaints','messages','chat-monitor','commissions','users','settings'].forEach(s=>{ document.getElementById('sec-'+s).style.display=s===name?'block':'none'; });
+  ['overview','orders','products','vendors','create-vendor','processing','complaints','messages','chat-monitor','commissions','users','settings'].forEach(s=>{ document.getElementById('sec-'+s).style.display=s===name?'block':'none'; });
   document.querySelectorAll('.dash-nav a').forEach(a=>a.classList.remove('active'));
   if(el) el.classList.add('active');
-  const fns={overview:renderOverview,orders:renderOrders,products:renderProducts,vendors:renderVendors,'vendor-plans':renderVendorPlans,complaints:renderComplaints,messages:renderMessages,'chat-monitor':renderChatMonitor,commissions:renderCommissions,users:renderUsers};
+  const fns={overview:renderOverview,orders:renderOrders,products:renderProducts,vendors:renderVendors,processing:renderProcessing,complaints:renderComplaints,messages:renderMessages,'chat-monitor':renderChatMonitor,commissions:renderCommissions,users:renderUsers};
   if(fns[name]) fns[name]();
 }
 
@@ -693,6 +683,203 @@ function viewBuyerChat(vendorId, buyerId, buyerName){
   if(msgs.length===0){conv.innerHTML='<div style="text-align:center;color:var(--mid);font-size:13px;padding:40px;">No direct messages between these two yet.</div>';return;}
   conv.innerHTML=msgs.map(m=>{const isVendor=m.senderId===vendorId;return`<div style="align-self:${isVendor?'flex-end':'flex-start'};max-width:78%;"><div style="padding:10px 14px;border-radius:12px;font-size:14px;background:${isVendor?'#0f172a':'#fff'};color:${isVendor?'#fff':'var(--dark)'};box-shadow:0 2px 6px rgba(0,0,0,.07);">${m.text}</div><div style="font-size:10px;color:#aaa;margin-top:3px;text-align:${isVendor?'right':'left'}">${m.senderName} · ${new Date(m.timestamp).toLocaleTimeString('en-NG',{hour:'2-digit',minute:'2-digit'})}</div></div>`;}).join('');
   conv.scrollTop=conv.scrollHeight;
+}
+
+
+// ============================================================
+// PROCESSING PAGE
+// ============================================================
+let currentProcTab = 1;
+
+function switchProcTab(n) {
+  currentProcTab = n;
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById('proc-tab-' + i).classList.toggle('active', i === n);
+    document.getElementById('proc-panel-' + i).style.display = i === n ? 'block' : 'none';
+  }
+  renderProcessing();
+}
+
+function renderProcessing() {
+  const orders = MS.getOrders();
+  const tab = currentProcTab;
+
+  if (tab === 1) {
+    // Awaiting admin payment confirmation — buyer claimed they paid
+    const pending = orders.filter(o => o.buyerPaidClaimed && !o.adminPaymentConfirmed);
+    const el = document.getElementById('proc-awaiting-list');
+    if (pending.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--mid);"><i class="fas fa-inbox" style="font-size:40px;margin-bottom:12px;display:block;"></i>No orders awaiting confirmation.</div>';
+      return;
+    }
+    el.innerHTML = pending.map(o => `
+      <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:14px;box-shadow:var(--shadow);border-left:4px solid #f59e0b;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+              <span style="font-family:monospace;font-size:16px;font-weight:700;color:var(--primary);">${o.trackingNumber}</span>
+              <span class="badge badge-pending">Awaiting Confirmation</span>
+            </div>
+            <div style="font-size:13px;color:var(--mid);">
+              <strong>${o.buyer}</strong> · ${o.phone} · ${MS.formatDate(o.date)}
+            </div>
+            <div style="font-size:13px;color:var(--mid);margin-top:2px;">Order ID: ${o.id} · Total: <strong style="color:var(--primary);">${MS.formatPrice(o.total)}</strong></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-sm btn-edit" onclick="viewOrderReceipt('${o.id}')"><i class="fas fa-receipt"></i> View Receipt</button>
+            <button class="btn-sm" style="background:#d4edda;color:#155724;" onclick="adminConfirmPayment('${o.id}')"><i class="fas fa-check"></i> Confirm Payment</button>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+          <div style="font-size:12px;font-weight:700;color:var(--mid);text-transform:uppercase;margin-bottom:8px;">Items Ordered:</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            ${o.items.map(item => {
+              const p = MS.getProductById(item.productId);
+              const v = p ? MS.getVendorById(p.vendorId) : null;
+              return `<span style="background:var(--light-bg);padding:4px 10px;border-radius:20px;font-size:12px;">${p ? p.name : item.productId} × ${item.qty} ${v ? '('+v.name+')' : ''}</span>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  else if (tab === 2) {
+    // Payment confirmed — ready to send money to vendors
+    const confirmed = orders.filter(o => o.adminPaymentConfirmed && o.status !== 'completed');
+    const el = document.getElementById('proc-disburse-list');
+    if (confirmed.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--mid);"><i class="fas fa-check-circle" style="font-size:40px;margin-bottom:12px;display:block;color:#27ae60;"></i>No orders ready for disbursement.</div>';
+      return;
+    }
+    el.innerHTML = confirmed.map(o => {
+      const payout = MS.getFullOrderPayout(o.id);
+      if (!payout) return '';
+      return `
+        <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:var(--shadow);border-left:4px solid #27ae60;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+            <div>
+              <span style="font-family:monospace;font-size:16px;font-weight:700;color:var(--primary);">${o.trackingNumber}</span>
+              <span class="badge" style="background:#d4edda;color:#155724;margin-left:8px;">Payment Confirmed ✓</span>
+            </div>
+            <div style="font-size:13px;color:var(--mid);">${o.buyer} · ${MS.formatDate(o.date)}</div>
+          </div>
+
+          <!-- Summary Row -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+            <div style="background:var(--light-bg);border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:11px;color:var(--mid);margin-bottom:2px;">Total Received</div>
+              <div style="font-weight:700;color:var(--dark);">${MS.formatPrice(payout.totalGross)}</div>
+            </div>
+            <div style="background:#fef9e7;border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:11px;color:var(--mid);margin-bottom:2px;">Your Commission</div>
+              <div style="font-weight:700;color:#f39c12;">${MS.formatPrice(payout.totalCommission)}</div>
+            </div>
+            <div style="background:#e8f5e9;border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:11px;color:var(--mid);margin-bottom:2px;">Total to Vendors</div>
+              <div style="font-weight:700;color:#27ae60;">${MS.formatPrice(payout.totalNet)}</div>
+            </div>
+          </div>
+
+          <!-- Per Vendor Breakdown -->
+          ${payout.vendorBreakdowns.map(vb => {
+            const payoutStatus = o.vendorPayouts?.[vb.vendor.id];
+            const isSent = payoutStatus?.status === 'sent' || payoutStatus?.status === 'confirmed';
+            const isConfirmed = payoutStatus?.status === 'confirmed';
+            return `
+            <div style="border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;${isSent ? 'background:#f9fff9;border-color:#a5d6a7;' : ''}">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                <div>
+                  <div style="font-weight:700;font-size:15px;">${vb.vendor.name}</div>
+                  <div style="font-size:12px;color:var(--mid);">${vb.vendor.owner}</div>
+                </div>
+                <div style="text-align:right;">
+                  ${isSent && !isConfirmed ? '<span class="badge" style="background:#cce5ff;color:#004085;">Sent — Awaiting Vendor Confirmation</span>' : ''}
+                  ${isConfirmed ? '<span class="badge" style="background:#d4edda;color:#155724;"><i class="fas fa-check-double"></i> Vendor Confirmed Receipt</span>' : ''}
+                </div>
+              </div>
+
+              <!-- Account Details -->
+              <div style="background:#0f172a;color:#fff;border-radius:8px;padding:12px 14px;margin-bottom:10px;">
+                <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Transfer To</div>
+                <div style="font-size:20px;font-weight:700;font-family:monospace;color:#f59e0b;letter-spacing:3px;">${vb.vendor.account || 'No account set'}</div>
+                <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:4px;">Bank: ${vb.vendor.bank || '—'} &nbsp;|&nbsp; Name: ${vb.vendor.owner}</div>
+              </div>
+
+              <!-- Item Breakdown -->
+              <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px;">
+                <thead><tr style="background:var(--light-bg);"><th style="padding:6px 8px;text-align:left;">Product</th><th style="padding:6px 8px;text-align:center;">Qty</th><th style="padding:6px 8px;text-align:right;">Price</th><th style="padding:6px 8px;text-align:right;">Comm/Item (${vb.rate}%)</th><th style="padding:6px 8px;text-align:right;">Total Comm</th><th style="padding:6px 8px;text-align:right;">Subtotal</th></tr></thead>
+                <tbody>${vb.breakdown.map(row => `<tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 8px;">${row.productName}</td><td style="padding:6px 8px;text-align:center;">${row.qty}</td><td style="padding:6px 8px;text-align:right;">${MS.formatPrice(row.pricePerItem)}</td><td style="padding:6px 8px;text-align:right;color:#f39c12;">${MS.formatPrice(row.commPerItem)} × ${row.qty} = ${MS.formatPrice(row.itemComm)}</td><td style="padding:6px 8px;text-align:right;color:#e74c3c;">${MS.formatPrice(row.itemComm)}</td><td style="padding:6px 8px;text-align:right;font-weight:600;">${MS.formatPrice(row.itemTotal)}</td></tr>`).join('')}</tbody>
+                <tfoot><tr style="background:#fff8e1;font-weight:700;"><td colspan="2" style="padding:8px;">TOTALS</td><td></td><td style="padding:8px;text-align:right;color:#f39c12;">Commission: ${MS.formatPrice(vb.totalCommission)}</td><td style="padding:8px;text-align:right;color:#e74c3c;">${MS.formatPrice(vb.totalCommission)}</td><td style="padding:8px;text-align:right;">${MS.formatPrice(vb.grossAmount)}</td></tr>
+                <tr style="background:#e8f5e9;font-weight:700;font-size:14px;"><td colspan="5" style="padding:10px;color:#27ae60;">NET AMOUNT TO SEND TO ${vb.vendor.name.toUpperCase()}</td><td style="padding:10px;text-align:right;color:#27ae60;font-size:16px;">${MS.formatPrice(vb.netAmount)}</td></tr></tfoot>
+              </table>
+
+              ${!isSent ? `<button class="btn-sm" style="background:#27ae60;color:#fff;padding:8px 16px;" onclick="adminMarkSent('${o.id}','${vb.vendor.id}')"><i class="fas fa-paper-plane"></i> Mark as Sent to ${vb.vendor.name}</button>` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+      `;
+    }).join('');
+  }
+
+  else if (tab === 3) {
+    const completed = orders.filter(o => o.status === 'completed' || o.status === 'disbursed');
+    const el = document.getElementById('proc-completed-list');
+    if (completed.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--mid);">No completed orders yet.</div>';
+      return;
+    }
+    el.innerHTML = `<div style="overflow-x:auto;"><table class="vpay-table"><thead><tr><th>Tracking</th><th>Order ID</th><th>Buyer</th><th>Total</th><th>Commission</th><th>Disbursed</th><th>Date</th><th>Status</th></tr></thead><tbody>${completed.map(o => {
+      const p = MS.getFullOrderPayout(o.id);
+      return `<tr><td><strong style="font-family:monospace;color:var(--primary);">${o.trackingNumber}</strong></td><td>${o.id}</td><td>${o.buyer}</td><td>${MS.formatPrice(o.total)}</td><td style="color:#f39c12;">${MS.formatPrice(p ? p.totalCommission : 0)}</td><td style="color:#27ae60;">${MS.formatPrice(p ? p.totalNet : 0)}</td><td>${MS.formatDate(o.date)}</td><td><span class="badge" style="background:#d4edda;color:#155724;">${o.status}</span></td></tr>`;
+    }).join('')}</tbody></table></div>`;
+  }
+}
+
+function adminConfirmPayment(orderId) {
+  if (!confirm('Confirm you have received payment for order ' + orderId + '?')) return;
+  MS.adminConfirmPayment(orderId);
+  MS.showToast('Payment confirmed! Order moved to disbursement.', 'success');
+  renderProcessing();
+  renderOverview();
+}
+
+function adminMarkSent(orderId, vendorId) {
+  const vendor = MS.getVendorById(vendorId);
+  if (!confirm('Confirm you have sent the payout to ' + (vendor ? vendor.name : vendorId) + '?')) return;
+  MS.adminMarkPayoutSent(orderId, vendorId);
+  MS.markCommissionsPaidForOrder(orderId, vendorId);
+  MS.showToast('Payout marked as sent! Vendor will confirm receipt.', 'success');
+  renderProcessing();
+}
+
+function viewOrderReceipt(orderId) {
+  const o = MS.getOrders().find(x => x.id === orderId);
+  if (!o || !o.receiptUrl) { MS.showToast('No receipt uploaded for this order', 'error'); return; }
+  const win = window.open();
+  win.document.write('<img src="' + o.receiptUrl + '" style="max-width:100%;"><p>Tracking: ' + o.trackingNumber + ' | Order: ' + o.id + '</p>');
+}
+
+// Fix settings save to include bank details
+function saveSettings() {
+  const s = MS.getSettings();
+  s.storeName = document.getElementById('set-name')?.value || s.storeName;
+  const acct = document.getElementById('set-admin-acct');
+  const bank = document.getElementById('set-admin-bank');
+  const acctName = document.getElementById('set-admin-acct-name');
+  if (acct) s.adminAccount = acct.value.trim();
+  if (bank) s.adminBank = bank.value.trim();
+  if (acctName) s.adminAccountName = acctName.value.trim();
+  MS.saveSettings(s);
+  MS.showToast('Settings saved!', 'success');
+}
+
+function renderSettings() {
+  const s = MS.getSettings();
+  if (document.getElementById('set-name')) document.getElementById('set-name').value = s.storeName || '';
+  if (document.getElementById('set-admin-acct')) document.getElementById('set-admin-acct').value = s.adminAccount || '';
+  if (document.getElementById('set-admin-bank')) document.getElementById('set-admin-bank').value = s.adminBank || '';
+  if (document.getElementById('set-admin-acct-name')) document.getElementById('set-admin-acct-name').value = s.adminAccountName || '';
 }
 
 // Modal close on overlay
